@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using webapp.mvc.Models;
 
-namespace webapp.mvc.DataAccessLayer {
-    public class LibraryContext : DbContext {
-        public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) {}
+namespace webapp.mvc.DataAccessLayer
+{
+    public class LibraryContext : DbContext
+    {
+        public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) { }
 
-        public DbSet<LibraryItem> libraryItems {get; set;}
-        public DbSet<CategoryItem> categoryItems { get; set; }
+        public DbSet<LibraryItem> libraryItems { get; set; }
+        public DbSet<Category> categoryItems { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
             /**
              * Note to reviewer:
              * Technically, we could do some static class like and add an extension method to ModelBuilder called DoNotPluralizeTableNames
@@ -19,7 +22,7 @@ namespace webapp.mvc.DataAccessLayer {
              * to point out that I *could*. The right choice, for the right time. Complexity, for complexity's sake, is *not* good design.
             */
             modelBuilder.Entity<LibraryItem>().ToTable("LibraryItem");
-            modelBuilder.Entity<CategoryItem>().ToTable("Category");
+            modelBuilder.Entity<Category>().ToTable("Category");
         }
     }
 }
