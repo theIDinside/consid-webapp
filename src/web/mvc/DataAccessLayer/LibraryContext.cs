@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using webapp.mvc.Models;
-using MySql.EntityFrameworkCore.Extensions;
-using MySql.EntityFrameworkCore.Infrastructure;
 
 namespace webapp.mvc.DataAccessLayer {
     public class LibraryContext : DbContext {

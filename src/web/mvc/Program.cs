@@ -1,7 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using MySql.EntityFrameworkCore.Extensions;
-using MySql.EntityFrameworkCore.Infrastructure;
 using webapp.mvc.Models;
 using webapp.mvc.DataAccessLayer;
 using Microsoft.EntityFrameworkCore.SqlServer;
