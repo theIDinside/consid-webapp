@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    <button onclick="setCategories()">Test</button>
+    <div id="categories"></div>
+</div>
+
+<script type="text/javascript">
+
+    // test function... entirely unnecessary in production code
+    const async sleepForThen = (time, callback) => {
+        if(callback) return setTimeout(callback, time);
+        return new Promise(resolve => setTimeout(resolve, time));
+    }
+
+    function setCategories() {
+        let e = document.getElementById("categoryCount");
+        if(!e) alert("did not find DOM element!");
+        sleepForThen(3000, GetCategories()).then(res => {
+            console.log(`Got data: ${res}`);
+            for(let cat of res) {
+                let childElement = document.createElement("div");
+                let idElement = document.createElement("div");
+                let nameElement = document.createElement("div");
+                idElement.innerText = cat.categoryId;
+                nameElement.innerText = cat.categoryName;
+                childElement.appendChild(idElement);
+                childElement.appendChild(nameElement);
+                e.appendChild(childElement);
+            }
+        });
+    }
+
+    async function GetCategories() {
+        return fetch("/Home/GetCategories").then(res => {
+            return res.json();
+        })
+    }
+
+</script>
