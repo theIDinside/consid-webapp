@@ -1,13 +1,13 @@
 -- create database consid
 -- go
-use consid;
-go
+use considsimon;
+GO
 -- SQLINES DEMO *** , create user & grant access to it, in the final seed script
 
 -- SQLINES LICENSE FOR EVALUATION USE ONLY
 if (not exists(SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Category')) 
 BEGIN
-PRINT "NO TABLE NAMED CATEGORY FOUND"
+PRINT 'NO TABLE NAMED CATEGORY FOUND'
 CREATE TABLE Category(ID INT CHECK (ID > 0) NOT NULL IDENTITY(1, 1), CategoryName NVARCHAR(100) NOT NULL, PRIMARY KEY(ID))
 
 -- SQLINES LICENSE FOR EVALUATION USE ONLY
@@ -21,7 +21,7 @@ VALUES
 	('Horror'), 
 	('Drama');
 END
-go
+GO
 
 -- insert books
 -- Programming books
