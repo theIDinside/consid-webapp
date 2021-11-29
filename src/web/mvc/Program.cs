@@ -3,9 +3,8 @@ using webapp.mvc.Models;
 using webapp.mvc.DataAccessLayer;
 using Microsoft.EntityFrameworkCore.SqlServer;
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+// Add services to the container.
 builder.Services.AddDbContext<webapp.mvc.DataAccessLayer.LibraryContext>(options => {
     // NB(for consid): we've set up this database connection in appsettings.json.
     // If you need to test against your own database, change the values there (port, hostname etc)

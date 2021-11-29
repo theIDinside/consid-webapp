@@ -1,0 +1,103 @@
+@model IEnumerable<webapp.mvc.Models.LibraryItem>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Library Items</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+@using (Html.BeginForm("Index", "LibraryItem"))
+{
+    @Html.TextBox("searchString");
+    @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
+    <input type="submit" value="Filter"/>
+}
+<table class="table">
+    <tr>
+        <th>
+            <!-- This should not display the Category ID, but the actual category name -->
+            @{
+                if (ViewBag.Ordering == "cat") {
+                    @Html.ActionLink("Category", "Index", new { sortBy = "cat_desc" })
+                } else {
+                    @Html.ActionLink("Category", "Index", new { sortBy = "cat" })
+                }
+            }
+        </th>
+        <th>
+            <!-- This should not display the Category ID, but the actual category name -->
+            @{
+                if (ViewBag.Ordering == "title") {
+                    @Html.ActionLink("Title", "Index", new { sortBy = "title_desc" })
+                } else {
+                    @Html.ActionLink("Title", "Index", new { sortBy = "title" })
+                }
+            }
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Author)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Pages)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.RunTimeMinutes)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Borrower)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.BorrowDate)
+        </th>
+        <th>
+            @{
+                if (ViewBag.Ordering == "type") {
+                    @Html.ActionLink("Type", "Index", new { sortBy = "type_desc" })
+                } else {
+                    @Html.ActionLink("Type", "Index", new { sortBy = "type" })
+                }
+            }
+            
+        </th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Category.CategoryName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Listing)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Author)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Pages)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RunTimeMinutes)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Borrower)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.displayDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Type)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.ID }) |
+                @Html.ActionLink("Details", "Details", new { id = item.ID }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.ID })
+            </td>
+        </tr>
+    }
+
+</table>

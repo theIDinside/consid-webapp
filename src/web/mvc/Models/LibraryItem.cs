@@ -2,21 +2,50 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace webapp.mvc.Models
 {
+    [Table("LibraryItem")]
     public class LibraryItem
     {
+        [Column("ID")]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Required]
         public int ID { get; set; }
+
+        [Column("CategoryID")]
         [Display(Name = "Category")]
+        [Required]
         public int CategoryID { get; set; }
+
+        [Required]
+        [StringLength(100)]
         public string Title { get; set; }
+
+        [Required]
+        [StringLength(100)]
         public string Author { get; set; }
+
+        [Column("Pages")]
         public int? Pages { get; set; }
-        [Display(Name = "Run time")]
+
+        [Column("RunTimeMinutes")]
         public int? RunTimeMinutes { get; set; }
-        [Display(Name = "Availability")]
+
+        [Column("IsBorrowable")]
+        [Required]
         public bool IsBorrowable { get; set; }
+
+        [Column("Borrower")]
+        [Required]
+        [StringLength(100)]
         public string Borrower { get; set; }
+
+        [Column("BorrowDate")]
         [Display(Name = "Borrow date")]
+        [DataType(DataType.Date)]
         public DateTime? BorrowDate { get; set; }
+
+        [Required]
+        [StringLength(20)]
         public string Type { get; set; }
 
         [NotMapped]
@@ -38,13 +67,8 @@ namespace webapp.mvc.Models
         // What the "entity framework" calls a navigational property. It's essentially what CategoryID maps against, being a foreign key and all.
         // We use this navigation property, to display the name of the category this Library item is assigned to.
         // Caveat here; being this is day 2 of me using C# and ASP.NET, I'm not entirely sure this is idiomatic C#/EF, but it works.
+        [ForeignKey("CategoryID")]
         public virtual Category Category { get; set; }
-        // I'm not really certain, that this is idiomatic Entity Framework code (I'm pretty sure it isn't); however, it is the solution I came up with.
-        // And seeing as how I would be applying for a Junior developer position, I'm 100% certain, someone at Consid could enlighten me, how
-        // this is supposed to work. This property, is what we set in the "Create" action of Library Item, and we then call into the DB and find an entry in the Category table matching that name
-        // to get it's ID so that when we store a new Library Item, with the foreign key CategoryID set to that.
-        [NotMapped]
-        public string categoryNameSelect { get; set; }
 
         [NotMapped]
         public int SelectedCategoryID;
@@ -62,7 +86,7 @@ namespace webapp.mvc.Models
         {
             get
             {
-                return BorrowDate?.ToString("yyyy-MM-dd");
+                return BorrowDate?.ToString("yyyy-MM-dd") ?? "";
             }
         }
 
