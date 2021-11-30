@@ -1,0 +1,277 @@
+﻿@model webapp.mvc.Models.LibraryItem
+
+@{
+    ViewBag.Title = $"Edit {Model.Title}";
+}
+<script src="~/js/editform.js"></script>
+<script src="~/js/validation.js"></script>
+<div class="tabpane">
+    <button class="tab-button" id="EditDetailsButton">Edit details</button>
+    <button class="tab-button" id="CheckoutButton">Checkout</button>
+</div>
+<script type="text/javascript">
+    // add event listeners to all "tab buttons"
+    for (let e of document.getElementsByClassName("tab-button")) {
+        e.addEventListener("click", (evt) => {
+            let id = evt.target.id.replace("Button", "Tab");
+            openTab(evt.target, id);
+        })
+    }
+</script>
+
+<div id="EditDetailsTab" class="tabcontent">
+    <h2>Edit details for:</h2>
+    @using (Html.BeginForm("Edit", "LibraryItem")) {
+        @Html.AntiForgeryToken()
+
+        <div class="form-horizontal">
+            <h4>@Model.Listing</h4>
+
+            <hr />
+            <div class="form-group">
+                <label for="CategoryID" class="control-label col-md-2">Category</label>
+                <div class="col-md-10">
+                    <select id="CategoryID" name="CategoryID" class="form-control"></select>
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Type, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownListFor(model => model.Type,
+             new List<SelectListItem> {
+                            new SelectListItem { Value = "book", Text="Book" },
+                            new SelectListItem { Value = "reference book", Text = "Reference book" },
+                            new SelectListItem { Value = "dvd", Text = "DVD" },
+                            new SelectListItem { Value = "audio book", Text = "Audio Book" }
+                 }, new { @class = "form-control", @onchange = "doUpdate()" }
+             )
+
+                    @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Title, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Title, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Author, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Author, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Author, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group" id="pagesInput">
+                @Html.LabelFor(model => model.Pages, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Pages, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Pages, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="form-group" id="runTimeMinutesInput">
+                @Html.LabelFor(model => model.RunTimeMinutes, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.RunTimeMinutes, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.RunTimeMinutes, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div id="borrowFields">
+                @Html.HiddenFor(model => model.IsBorrowable)
+                @Html.HiddenFor(model => model.Borrower)
+                @Html.HiddenFor(model => model.BorrowDate)
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="Save changes" class="btn btn-default" />
+                </div>
+            </div>
+            <div class="text-danger">
+                @ViewBag.EditErrorMessage
+            </div>
+        </div>
+    }
+</div>
+
+<div id="CheckoutTab" class="tabcontent">
+    <div class="form-horizontal">
+        <h4>Checkout information</h4>
+        <hr />
+        @{
+            if (Model.IsBorrowable) {
+                if (Model.IsBorrowed) {
+                    using (Html.BeginForm("Check in", "LibraryItem", FormMethod.Post, new { @id = "CheckInForm" })) {
+                        @Html.AntiForgeryToken()
+                        <div class="form-group-sm">
+                            <div>
+                                <div>
+                                    @Html.LabelFor(model => model.Borrower)
+                                </div>
+                                <div>
+                                    @Html.DisplayFor(model => model.Borrower)
+                                </div>
+                                <div>
+                                    @Html.LabelFor(model => model.BorrowDate)
+                                </div>
+                                <div>
+                                    @Html.DisplayFor(model => model.BorrowDate)
+                                </div>
+                                <div>
+                                    @Html.ActionLink("Check in", "CheckIn", "LibraryItem", new { id = Model.ID }, new { @class = "btn btn-default text-center" })
+                                </div>
+                            </div>
+                        </div>
+                    }
+                } else {
+                    using (Html.BeginForm("CheckOut", "LibraryItem", FormMethod.Post, new { @id = "CheckoutForm" })) {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(model => model.ID)
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        <div class="form-group">
+                            <label for="Borrower" class="control-label col-md-2">Borrower</label>
+                            <div class="col-md-10">
+                                <input type="text" id="Borrower2" name="Borrower" required minlength="1" class="form-control ">
+                                <span id="BorrowerValidate" class="text-danger field-validation-valid"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="BorrowDate" class="control-label col-md-2">Check out date</label>
+                            <div class="col-md-10">
+                                <input type="text" id="BorrowDate2" name="BorrowDate" required minlength="8" class="form-control" placeholder="e.g. 99/12/31 | 1999/12/31 | 1999-12-31">
+                                <span id="BorrowDateValidate" class="text-danger field-validation-valid"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-offset-2 col-md-10">
+                                <input type="submit" value="Checkout" class="btn btn-default" />
+                            </div>
+                        </div>
+                        <div class="text-danger">
+                            @ViewBag.Error
+                        </div>
+                    }
+                }
+            } else {
+                <div>
+                    You can't check out reference books.
+                </div>
+            }
+        }
+    </div>
+
+</div>
+
+<div class="">
+    @Html.ActionLink("Back to List", "Index")
+</div>
+
+<!-- Our vanilla Javascript code handling some UI events and stuff -->
+
+<style>
+    /* This is our style for the invalid fields */
+
+    #Borrower2.invalidInputContent {
+        border-color: #900 !important;
+        background-color: #FDD !important;
+        box-shadow: 0 0 5px 1px red !important;
+    }
+
+    #BorrowDate2.invalidInputContent {
+        border-color: #900 !important;
+        background-color: #FDD !important;
+        box-shadow: 0 0 5px 1px red !important;
+    }
+
+    input.invalid {
+        border-color: #900;
+        background-color: #FDD;
+        box-shadow: 0 0 5px 1px red;
+    }
+
+    input:focus.invalid {
+        outline: none;
+    }
+
+    /* Style the tab */
+    .tabpane {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    /* Style the buttons that are used to open the tab content */
+    .tab-button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+    }
+
+        /* Change background color of buttons on hover */
+        .tab-button:hover {
+            background-color: #4cff00;
+        }
+
+        /* Create an active/current tablink class */
+        .tab-button.active {
+            background-color: #ff6a00;
+        }
+
+    /* Style the tab content */
+    .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+</style>
+<script type="text/javascript">
+    // this is basically a hack, because I don't know how to directly from the onchange, set the parameter to updateEditFields(@Model.LengthValue)
+    // so instead, from the onchange on line 42, i delegate to updateEditFields from this function.
+    const doUpdate = () => { updateEditFields(@Model.LengthValue); }
+
+    // I've written my own custom validation here, because I kind of feel the coupling with C# for this stuff
+    // is atrocious. This is battled tested Javascript, easy to write, simple to comprehend.
+    
+    let borrowerInput = document.getElementById("Borrower2");
+    let borrowerValidate = document.getElementById("BorrowerValidate");
+    
+    let borrowDateInput = document.getElementById("BorrowDate2");
+    let borrowDateValidate = document.getElementById("BorrowDateValidate");
+
+    let form = document.getElementById("CheckoutForm");
+    if (form) {
+        form.addEventListener("submit", (evt) => {
+            // who needs validation libraries? :)
+            if (!validateInputOnSubmit(borrowerInput, "The name of the borrower must be input", evt, (e) => e.value.length > 0 && e.value != null)) {
+                // start listening on every input until a valid one is entered
+                borrowerInput.addEventListener("input", () => {
+                    validateInputOnSubmit(borrowerInput, "The name of the borrower must be input", null, (e) => e.value.length > 0 && e.value != null);
+                });
+            }
+            if (!validateInputOnSubmit(borrowDateInput, "Input must be a valid date", evt, dateValidator)) {
+                // start listening on every input until a valid one is entered
+                borrowDateInput.addEventListener("input", () => {
+                    validateInputOnSubmit(borrowDateInput, "Input must be a valid date", null, dateValidator);
+                });
+            }
+        });
+    }
+    document.addEventListener("DOMContentLoaded", async () => {
+        // set input field state on page load
+        // update form fields to contain values of this library item.
+        updateEditFields(@Model.LengthValue);
+        // set Edit Details tab as active
+        openTab(document.getElementById("EditDetailsButton"), "EditDetailsTab");
+        // select the category, which this item belongs to as default selected
+        await populateCategoriesList("CategoryID");
+        setSelection(@Model.CategoryID, "CategoryID");
+    });
+</script>

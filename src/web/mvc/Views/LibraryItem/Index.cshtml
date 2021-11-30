@@ -1,28 +1,46 @@
-@model IEnumerable<webapp.mvc.Models.LibraryItem>
-
+﻿@model IEnumerable<webapp.mvc.Models.LibraryItem>
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 @{
     ViewBag.Title = "Index";
 }
-
+<style type="text/css">
+    .controls {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        margin-bottom: 3px;
+    }
+</style>
 <h2>Library Items</h2>
-
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
-@using (Html.BeginForm("Index", "LibraryItem"))
-{
-    @Html.TextBox("searchString");
-    @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
-    <input type="submit" value="Filter"/>
-}
+<div class="controls">
+    <p>
+        @Html.ActionLink("Create New", "Create", "LibraryItem", new {}, new { @class ="btn btn-primary"})
+    </p>
+    @using (Html.BeginForm("Index", "LibraryItem"))
+    {
+        <div class="form-group">
+            <div class="col-md-10">
+                <label for="searchString" class="control-label col-md-2">Title filter</label>
+            </div>
+            <div class="col-md-10">
+                @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
+                @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
+            </div>
+        </div>
+        <input type="submit" value="Filter" class="btn btn-primary" />
+    }
+</div>
 <table class="table">
     <tr>
         <th>
-            <!-- This should not display the Category ID, but the actual category name -->
             @{
-                if (ViewBag.Ordering == "cat") {
+                if (ViewBag.Ordering == "cat")
+                {
                     @Html.ActionLink("Category", "Index", new { sortBy = "cat_desc" })
-                } else {
+                }
+                else
+                {
                     @Html.ActionLink("Category", "Index", new { sortBy = "cat" })
                 }
             }
@@ -30,9 +48,12 @@
         <th>
             <!-- This should not display the Category ID, but the actual category name -->
             @{
-                if (ViewBag.Ordering == "title") {
+                if (ViewBag.Ordering == "title")
+                {
                     @Html.ActionLink("Title", "Index", new { sortBy = "title_desc" })
-                } else {
+                }
+                else
+                {
                     @Html.ActionLink("Title", "Index", new { sortBy = "title" })
                 }
             }
@@ -54,13 +75,16 @@
         </th>
         <th>
             @{
-                if (ViewBag.Ordering == "type") {
+                if (ViewBag.Ordering == "type")
+                {
                     @Html.ActionLink("Type", "Index", new { sortBy = "type_desc" })
-                } else {
+                }
+                else
+                {
                     @Html.ActionLink("Type", "Index", new { sortBy = "type" })
                 }
             }
-            
+
         </th>
         <th></th>
     </tr>

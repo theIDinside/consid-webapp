@@ -1,0 +1,122 @@
+﻿@model webapp.mvc.Models.Employee
+
+@{
+    ViewBag.Title = "Edit";
+}
+<!-- Pulls in asynchronous requests for Managers, etc -->
+<script src="~/js/employees.js"></script>
+<script src="~/js/editform.js"></script>
+
+<h2>Edit</h2>
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Employee</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.ID)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.FirstName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.FirstName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.FirstName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.LastName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.LastName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.LastName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <label for="SalaryInput" class="control-label col-md-2">Salary input rank</label>
+            <div class="col-md-10">
+                <select id="SalaryInput" name="SalaryInput" class="form-control">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="EmployeeType" class="control-label col-md-2">Employee type</label>
+            <div class="col-md-10">
+                <select name="EmployeeType" id="EmployeeType" class="form-control">
+                    <option value="Employee">Employee</option>
+                    <option value="Manager">Manager</option>
+                    <option value="CEO">CEO</option>
+                </select>
+            </div>
+            @Html.ValidationMessageFor(model => model.IsCEO, "", new { @class = "text-danger " })
+        </div>
+
+        <div class="form-group">
+            <label for="ManagerID" class="control-label col-md-2">Managed by (optional)</label>
+            <div class="col-md-10">
+                <select id="ManagerID" name="ManagerID" class="form-control">
+                    <option value="-1">None</option>
+                </select>
+                @Html.ValidationMessageFor(model => model.ManagerID, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        function setEmployeeTypeSelection() {
+            let e = document.getElementById("EmployeeType");
+            console.log(`Model is ceo: @Model.IsCEO / Is manager: @Model.IsManager | Manager id: @Model.ManagerID`);
+            // this is stupid. Stupid C#. Stupid. Stupid. Stupid.
+            if ("@Model.IsCEO" == "True") {
+                e.value = "CEO";
+            } else if ("@Model.IsManager" == "True") {
+                e.value = "Manager";
+            } else {
+                e.value = "Employee";
+            }
+        };
+        setEmployeeTypeSelection();
+        getManagers().then(result => {
+            let managerSelect = document.getElementById("ManagerID");
+            if (managerSelect) {
+                for (let manager of result) {
+                    let opt = new Option(manager.name, manager.id);
+                    managerSelect.appendChild(opt);
+                }
+            }
+        }).catch(err => {
+            alert("<SERVER ERROR> Failed to get Managers.");
+        }).then(res => {
+            setSelection(@Model.ManagerID, "ManagerID");
+        });
+    });
+</script>

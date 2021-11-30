@@ -1,0 +1,99 @@
+﻿@model IEnumerable<webapp.mvc.Models.Employee>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.FirstName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.LastName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Salary)
+        </th>
+        <th>
+            Position
+        </th>
+        <th>
+            Managed by
+        </th>
+        <th>Manage employee record</th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FirstName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Salary)
+            </td>
+            <td>
+                @if (item.IsCEO)
+                {
+                    <div>CEO</div>
+                }
+                else if (item.IsManager)
+                {
+                    <div>Manager</div>
+                }
+                else
+                {
+                    <div>Employee</div>
+                }
+            </td>
+            <td class="managerIdContainer">
+                @if (item.ManagerID == null)
+                {
+                    <div>-1</div>
+                }
+                else
+                {
+                    <div>@item.ManagerID</div>
+                }
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id=item.ID }) |
+                @Html.ActionLink("Details", "Details", new { id=item.ID }) |
+                @Html.ActionLink("Delete", "Delete", new { id=item.ID })
+            </td>
+        </tr>
+    }
+
+</table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // we wait until page is loaded, and then we do a splat of all managers in the DB. This way,
+        // we don't have to do one asynchronous call per row, but instead just grab all managers and then edit the DOM and set
+        // data accordingly.
+        fetch("/Employees/GetManagers").then(response => response.json()).then(managers => {
+            let managerInfoList = document.getElementsByClassName("managerIdContainer");
+            for (let domElement of managerInfoList) {
+                if (domElement.textContent.trim() == "-1") {
+                    domElement.textContent = "Unmanaged";
+                } else {
+                    for (let manager of managers) {
+                        if (+manager.id == +domElement.textContent.trim()) {
+                            domElement.textContent = manager.name;
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>

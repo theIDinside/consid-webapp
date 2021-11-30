@@ -1,0 +1,91 @@
+﻿@model webapp.mvc.Models.LibraryItem
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Library Item Database Details</h4>
+    This page would essentially be removed for the end user; it's simply here for developer purposes so that we can view
+    the actual data stored in the database. For an end user, something like the fields categoryID and ID, which are
+    represented as number is non-essential (and probably even irrelevant).
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            Library Item ID (PK)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ID)
+        </dd>
+
+        <dt>
+            Category ID (FK)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.CategoryID)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Title)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Author)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Author)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Pages)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Pages)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.RunTimeMinutes)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.RunTimeMinutes)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IsBorrowable)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IsBorrowable)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Borrower)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Borrower)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.BorrowDate)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.BorrowDate)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Type)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Type)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.ID }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

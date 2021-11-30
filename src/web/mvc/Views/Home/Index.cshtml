@@ -1,45 +1,44 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewBag.Title = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<script>
+    function libraryItems() {
+        window.location.ref = window.location.href + "/LibraryItem";
+    }
+</script>
 
-    <button onclick="setCategories()">Test</button>
-    <div id="categories"></div>
+<div class="jumbotron">
+    <h1>Consid Technical Assessment</h1>
+    <p class="lead">
+        A web application that aims to fulfill the requirements laid out in the requirements document.
+    </p>
+
+    This application was made by letting Visual Studio create a new ASP.NET Web Application (.NET Framework 4.7.2).<br />
+    Technologies used:
+    <ul>
+        <li>ASP.NET MVC (.NET Framework 4.7.2)</li>
+        <li>C#</li>
+        <li><a href="https://docs.microsoft.com/en-us/ef/" target="_blank">Entity Framework</a> - used for binding the data in the backend with a model to be represented in the MVC UI, also provides a nicer programmable interface to the SQL server.</li>
+        <li>Vanilla Javascript for simple UI related things, such as styling "tabbed" content, client side validation of forms</li>
+        <li>Bootstrap CSS</li>
+        <li>LocalDB SQL Server, hosted by Visual Studio's development environment</li>
+    </ul>
+
+    In the process of creating this project, I've spent about 20 hours spread out over a full work week, with possibly some more time, involving researching background material necessary to complete this task.
 </div>
 
-<script type="text/javascript">
-
-    // test function... entirely unnecessary in production code
-    const async sleepForThen = (time, callback) => {
-        if(callback) return setTimeout(callback, time);
-        return new Promise(resolve => setTimeout(resolve, time));
-    }
-
-    function setCategories() {
-        let e = document.getElementById("categoryCount");
-        if(!e) alert("did not find DOM element!");
-        sleepForThen(3000, GetCategories()).then(res => {
-            console.log(`Got data: ${res}`);
-            for(let cat of res) {
-                let childElement = document.createElement("div");
-                let idElement = document.createElement("div");
-                let nameElement = document.createElement("div");
-                idElement.innerText = cat.categoryId;
-                nameElement.innerText = cat.categoryName;
-                childElement.appendChild(idElement);
-                childElement.appendChild(nameElement);
-                e.appendChild(childElement);
-            }
-        });
-    }
-
-    async function GetCategories() {
-        return fetch("/Home/GetCategories").then(res => {
-            return res.json();
-        })
-    }
-
-</script>
+<div class="row">
+    <div class="col-md-4">
+        <h2>View all library Items</h2>
+        <p>
+            Shows a list of library items existing in the database.
+        </p>
+        <p><a class="btn btn-default" href='@Url.Action("Index", "LibraryItem")'>View & edit library items</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>View categories</h2>
+        Shows the list of categories and provides a rudimentary interface for editing these.
+        <p><a class="btn btn-default" href="@Url.Action("Index", "Category")">View & edit categories</a></p>
+    </div>
+</div>

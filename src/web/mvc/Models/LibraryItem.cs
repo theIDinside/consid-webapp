@@ -14,6 +14,7 @@ namespace webapp.mvc.Models
         [Column("CategoryID")]
         [Display(Name = "Category")]
         [Required]
+        [ForeignKey("CategoryID")]
         public int CategoryID { get; set; }
 
         [Required]
@@ -67,7 +68,7 @@ namespace webapp.mvc.Models
         // What the "entity framework" calls a navigational property. It's essentially what CategoryID maps against, being a foreign key and all.
         // We use this navigation property, to display the name of the category this Library item is assigned to.
         // Caveat here; being this is day 2 of me using C# and ASP.NET, I'm not entirely sure this is idiomatic C#/EF, but it works.
-        [ForeignKey("CategoryID")]
+
         public virtual Category Category { get; set; }
 
         [NotMapped]
