@@ -1,0 +1,90 @@
+﻿@model webapp.mvc.Models.Employee
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Employee</h4>
+    This page would essentially be removed for the end user; it's simply here for developer purposes so that we can view
+    the actual data stored in the database. For an end user, something like the fields categoryID and ID, which are
+    represented as number is non-essential (and probably even irrelevant).
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            Primary Key ID:
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.ID)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.FirstName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.FirstName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Salary)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Salary)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IsCEO)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.IsCEO)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IsManager)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.IsManager)
+        </dd>
+
+        <dt>
+            Manager (optional)
+        </dt>
+
+        <dd>
+            <div id="Manager"></div>
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.ID }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        let manId = @Model.ID ?? -1;
+        fetch(`/Employees/GetManager/${manId}`).then(r => r.json()).then(maybeManager => {
+            let e = document.getElementById("Manager");
+            if (e) {
+                e.innerHTML = maybeManager.name;
+            } else {
+                alert("DOM Error, no element with the ID 'Manager'");
+            }
+        })
+    });
+</script>

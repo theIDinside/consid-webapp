@@ -10,6 +10,8 @@ namespace webapp.mvc.DataAccessLayer
         public DbSet<LibraryItem> libraryItems { get; set; }
         public DbSet<Category> categoryItems { get; set; }
 
+        public DbSet<Employee> employees { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             /**
@@ -23,6 +25,7 @@ namespace webapp.mvc.DataAccessLayer
             */
             modelBuilder.Entity<LibraryItem>().ToTable("LibraryItem");
             modelBuilder.Entity<Category>().ToTable("Category");
+            modelBuilder.Entity<Employee>().ToTable("Employee");
         }
     }
 }
