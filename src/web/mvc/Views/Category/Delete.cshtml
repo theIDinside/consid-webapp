@@ -15,7 +15,7 @@
             @Html.DisplayNameFor(model => model.CategoryName)
         </dt>
 
-        <dd>
+        <dd id="Category">
             @Html.DisplayFor(model => model.CategoryName)
         </dd>
 
@@ -26,7 +26,7 @@
         @Html.AntiForgeryToken()
 
         <div class="form-actions no-color">
-            <input type="submit" value="Delete" class="btn btn-default" /> |
+            <input type="submit" value="Delete" class="btn btn-primary" /> |
             @Html.ActionLink("Back to List", "Index")
         </div>
         <div>
@@ -34,3 +34,9 @@
         </div>
     }
 </div>
+
+<script>
+    onDocumentLoaded(() => {
+
+    });
+</script>
