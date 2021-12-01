@@ -6,30 +6,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapp.mvc.Controllers;
 
-public class HomeController : Controller
-{
+public class HomeController : Controller {
     private readonly ILogger<HomeController> _logger;
     private readonly LibraryContext db;
 
-    public HomeController(ILogger<HomeController> logger, LibraryContext ctx)
-    {
+    public HomeController(ILogger<HomeController> logger, LibraryContext ctx) {
         _logger = logger;
         db = ctx;
     }
 
-    public async Task<IActionResult> Index()
-    {
+    public async Task<IActionResult> Index() {
         return View();
     }
 
-    public async Task<IActionResult> Privacy()
-    {
+    public async Task<IActionResult> Privacy() {
         return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public async Task<IActionResult> Error()
-    {
+    public async Task<IActionResult> Error() {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
@@ -42,7 +37,7 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<JsonResult> GetItems() {
         var items = await db.libraryItems.ToListAsync();
-        return Json(items.Select(i => new { title = i.Title, author = i.Author}));
+        return Json(items.Select(i => new { title = i.Title, author = i.Author }));
     }
 
 }

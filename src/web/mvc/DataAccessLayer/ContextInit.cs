@@ -1,16 +1,28 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace webapp.mvc.DataAccessLayer
-{
+namespace webapp.mvc.DataAccessLayer {
     using Models;
+    using webapp.mvc.Services;
 
-    public static class SeedDB
-    {
-        public static void Initialize(IServiceProvider provider)
-        {
-            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>()))
-            {
+    public static class SeedDB {
+
+        static ISalaryService SalaryService = new InputRankSalaryService();
+
+        public static Employee makeCEO(string firstName, string lastName, int salaryRank) {
+            return new Employee { FirstName = firstName, LastName = lastName, Salary = SalaryService.CalculateSalary(EmployeeType.CEO, 10), IsManager = true, IsCEO = true, ManagerID = null };
+        }
+
+        public static Employee makeManager(string firstName, string lastName, int salaryRank, int? managedBy = null) {
+            return new Employee { FirstName = firstName, LastName = lastName, Salary = SalaryService.CalculateSalary(EmployeeType.Manager, 10), IsManager = true, IsCEO = false, ManagerID = managedBy };
+        }
+
+        public static Employee makeEmployee(string firstName, string lastName, int salaryRank, int? managedBy = null) {
+            return new Employee { FirstName = firstName, LastName = lastName, Salary = SalaryService.CalculateSalary(EmployeeType.Manager, 10), IsManager = false, IsCEO = false, ManagerID = managedBy };
+        }
+
+        public static void Initialize(IServiceProvider provider) {
+            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>())) {
                 // Database should be seeded by the createtables.sql, but if not;
                 ctx.Database.EnsureCreated();
                 if (ctx.libraryItems.Any()) return;
@@ -42,14 +54,8 @@ namespace webapp.mvc.DataAccessLayer
                 );
                 ctx.SaveChanges();
                 ctx.libraryItems.Add(new LibraryItem { CategoryID = catProgrammingID, Title = "Foo bar", Author = "Baz", Pages = 1337, IsBorrowable = false, Borrower = "", Type = "reference book" });
+                var salaryService = new InputRankSalaryService();
 
-                var employees = new List<Employee> {
-                    new Employee { FirstName = "Simon", LastName = "Farre", Salary = 1001, IsManager = false, IsCEO = false, ManagerID = 2},
-                    new Employee { FirstName = "Andreas", LastName = "Farre", Salary = 1010, IsManager = true, IsCEO = false, ManagerID = 3 },
-                    new Employee { FirstName = "Sten", LastName = "Farre", Salary = 200000, IsManager = true, IsCEO = true }
-                };
-
-                employees.ForEach(e => ctx.employees.Add(e));
                 ctx.SaveChanges();
             }
         }

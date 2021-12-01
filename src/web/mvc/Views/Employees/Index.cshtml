@@ -31,7 +31,7 @@
 
     @foreach (var item in Model)
     {
-        <tr>
+        <tr class="library-items-table-item">
             <td>
                 @Html.DisplayFor(modelItem => item.FirstName)
             </td>
@@ -67,7 +67,6 @@
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id=item.ID }) |
-                @Html.ActionLink("Details", "Details", new { id=item.ID }) |
                 @Html.ActionLink("Delete", "Delete", new { id=item.ID })
             </td>
         </tr>
@@ -76,7 +75,7 @@
 </table>
 
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    onDocumentLoaded(() => {
         // we wait until page is loaded, and then we do a splat of all managers in the DB. This way,
         // we don't have to do one asynchronous call per row, but instead just grab all managers and then edit the DOM and set
         // data accordingly.

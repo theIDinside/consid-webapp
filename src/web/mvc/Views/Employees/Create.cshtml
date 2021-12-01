@@ -88,7 +88,9 @@
         return fetch("/Employees/GetManagers").then(r => r.json());
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+
+
+    onDocumentLoaded(() => {
         getManagers().then(result => {
             let managerSelect = document.getElementById("ManagerID");
             if (managerSelect) {

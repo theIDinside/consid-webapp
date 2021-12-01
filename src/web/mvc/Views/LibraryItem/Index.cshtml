@@ -4,34 +4,29 @@
     ViewBag.Title = "Index";
 }
 <style type="text/css">
-    .controls {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-        margin-bottom: 3px;
-    }
+
 </style>
 <h2>Library Items</h2>
 <div class="controls">
-    <p>
+    <div>
         @Html.ActionLink("Create New", "Create", "LibraryItem", new {}, new { @class ="btn btn-primary"})
-    </p>
-    @using (Html.BeginForm("Index", "LibraryItem"))
+    </div>
+    @using (Html.BeginForm("Index", "LibraryItem", FormMethod.Post, new { @class = "search-filter-controls" }))
+
     {
-        <div class="form-group">
-            <div class="col-md-10">
-                <label for="searchString" class="control-label col-md-2">Title filter</label>
-            </div>
-            <div class="col-md-10">
-                @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
-                @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
-            </div>
+        <div>
+            <label for="searchString" class="control-label">Title filter</label>
+        </div>
+        <div>
+            @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
+        </div>
+        <div>
+            @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
         </div>
         <input type="submit" value="Filter" class="btn btn-primary" />
     }
 </div>
-<table class="table">
+<table class="table library-items-table">
     <tr>
         <th>
             @{
@@ -45,7 +40,7 @@
                 }
             }
         </th>
-        <th>
+        <th class="library-item-title">
             <!-- This should not display the Category ID, but the actual category name -->
             @{
                 if (ViewBag.Ordering == "title")
@@ -61,11 +56,8 @@
         <th>
             @Html.DisplayNameFor(model => model.Author)
         </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Pages)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.RunTimeMinutes)
+        <th class="library-items-length">
+            Length
         </th>
         <th>
             @Html.DisplayNameFor(model => model.Borrower)
@@ -86,26 +78,30 @@
             }
 
         </th>
-        <th></th>
+        <th>Update</th>
     </tr>
 
     @foreach (var item in Model)
     {
-        <tr>
+        <tr class="library-items-table-item" onclick='route(`LibraryItem/Edit/${@Json.Serialize(item.ID)}`)'>
             <td>
                 @Html.DisplayFor(modelItem => item.Category.CategoryName)
             </td>
-            <td>
+            <td class="library-item-title">
                 @Html.DisplayFor(modelItem => item.Listing)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Author)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Pages)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RunTimeMinutes)
+            <td class="library-items-length">
+                @{
+                    if (item.Pages.HasValue)
+                    {
+                        <div>@Json.Serialize(item.Pages) pages</div>
+                    } else {
+                        <div>@Json.Serialize(item.RunTimeMinutes) min</div>
+                    }
+                }
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Borrower)
@@ -118,7 +114,6 @@
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id = item.ID }) |
-                @Html.ActionLink("Details", "Details", new { id = item.ID }) |
                 @Html.ActionLink("Delete", "Delete", new { id = item.ID })
             </td>
         </tr>

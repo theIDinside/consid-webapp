@@ -64,7 +64,7 @@
     }
 
     // Set up the validator logic & populating of categories etc
-    document.addEventListener("DOMContentLoaded", () => {
+    onDocumentLoaded(() => {
         // set input field state on page load
         updateCreateFields();
         populateCategoriesList("CategoryID");

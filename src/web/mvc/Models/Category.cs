@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace webapp.mvc.Models
-{
-    public class Category
-    {
+namespace webapp.mvc.Models {
+    public class Category {
         [Column("ID")]
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

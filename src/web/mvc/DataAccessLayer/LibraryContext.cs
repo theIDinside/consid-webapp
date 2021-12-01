@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using webapp.mvc.Models;
 
-namespace webapp.mvc.DataAccessLayer
-{
-    public class LibraryContext : DbContext
-    {
+namespace webapp.mvc.DataAccessLayer {
+    public class LibraryContext : DbContext {
         public LibraryContext(DbContextOptions<LibraryContext> options) : base(options) { }
 
         public DbSet<LibraryItem> libraryItems { get; set; }
@@ -12,8 +10,7 @@ namespace webapp.mvc.DataAccessLayer
 
         public DbSet<Employee> employees { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+        protected override void OnModelCreating(ModelBuilder modelBuilder) {
             /**
              * Note to reviewer:
              * Technically, we could do some static class like and add an extension method to ModelBuilder called DoNotPluralizeTableNames

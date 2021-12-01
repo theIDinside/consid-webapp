@@ -36,28 +36,21 @@
         </dd>
 
         <dt>
-            @Html.DisplayNameFor(model => model.IsCEO)
+            Position
         </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.IsCEO)
-        </dd>
-
+            @{
+                if(Model.IsCEO) {
+                    <dd>CEO</dd>
+                } else if(Model.IsManager) {
+                    <dd>Manager</dd>
+                } else {
+                    <dd>Employee</dd>
+                }
+            }
         <dt>
-            @Html.DisplayNameFor(model => model.IsManager)
+            Managed by
         </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.IsManager)
-        </dd>
-
-        <dt>
-            @Html.DisplayNameFor(model => model.ManagerID)
-        </dt>
-
-        <dd>
-            @Html.DisplayFor(model => model.ManagerID)
-        </dd>
+        <dd id="ManagedBy"></dd>
 
     </dl>
 
@@ -71,3 +64,28 @@
         </div>
     }
 </div>
+
+<script>
+    onDocumentLoaded(() => {
+        let managerId = @Json.Serialize(Model.ManagerID ?? -1 );
+        console.log(`manager id: ${managerId}`);
+        let managedByElement = document.getElementById("ManagedBy");
+        if(managerId == -1) {
+            managedByElement.innerText = "No one";
+        } else {
+            getEmployeeInfo(managerId).then(employee => {
+                if(employee.id != undefined) {
+                    let link = document.createElement("a");
+                    link.href = `/Employees/Edit/${managerId}`;
+                    let name = document.createTextNode(`${employee.firstname} ${employee.lastname}`);
+                    link.appendChild(name);
+                    managedByElement.appendChild(link);
+                } else {
+                    throw new Error(`Could not retrieve Employee record with id ${managerId}`);
+                }
+            }).catch(err => {
+                console.log(`[DATA REQUEST ERROR]: ${err}`);
+            })
+        }
+    })
+</script>
