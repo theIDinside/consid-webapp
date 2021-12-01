@@ -9,24 +9,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
+using webapp.mvc.Services;
+namespace webapp.mvc.Controllers {
 
-namespace ConsidTechAssessment.Controllers
-{
 
-    enum EmployeeTypeParameter
-    {
-        Employee,
-        Manager,
-        CEO
-    }
 
-    public class EmployeesController : Controller
-    {
+    public class EmployeesController : Controller {
 
         private readonly LibraryContext db;
         private readonly ILogger<EmployeesController> _logger;
-        public EmployeesController(ILogger<EmployeesController> logger, LibraryContext ctx)
-        {
+        public EmployeesController(ILogger<EmployeesController> logger, LibraryContext ctx) {
             db = ctx;
             _logger = logger;
         }
@@ -37,35 +29,24 @@ namespace ConsidTechAssessment.Controllers
         // Let's not forget either; these things come with a pretty hefty cost. Virtual tables ever increasing in size, virtual dispatch adding multiple layers of indirection (and CPU cache misses)
         // Design is everything, obviously, but it also has to be non-pessimized design, otherwise we be slow. And if we're slow, we're ramping up electricity costs for the companies we're supposed
         // to do digitalization for. Just a little rant from me.
-        private async void validateManagerIDAttribute(Employee employee)
-        {
-            if (employee.ManagerID == -1)
-            {
-                employee.ManagerID = null;
-                return;
-            }
-            if (employee.ManagerID != null)
-            {
-                if (employee.ManagerID == employee.ID)
-                {
+        private async void validateManagerIDAttribute(Employee employee) {
+            if (employee.ManagerID != null) {
+                if (employee.ManagerID == employee.ID) {
                     ModelState.AddModelError("ManagerID", "An employee can not manage oneself");
                     return;
                 }
-                if (employee.IsCEO)
-                {
+                if (employee.IsCEO) {
                     ModelState.AddModelError("ManagerID", "A CEO can not be managed by someone");
                     return;
                 }
-                var man = await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID);
-                if (man != null)
-                {
-                    if (!man.IsManager)
-                    {
+                if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
+                    if (!employee.IsManager && man.IsCEO) {
+
+                    }
+                    if (!man.IsManager) {
                         ModelState.AddModelError("ManagerID", $"Employee {man.FullName} (ID: {man.ID}) is not a manager.");
                     }
-                }
-                else
-                {
+                } else {
                     ModelState.AddModelError("ManagerID", $"No manager found with id {employee.ManagerID}");
                 }
             }
@@ -74,82 +55,70 @@ namespace ConsidTechAssessment.Controllers
 
         // Validates an Employee Model object, that is on route for insertion into -> database.
         // Privately mutates the ModelState.
-        private void validateUniqueness(Employee employee)
-        {
-            if (db.employees.Any(e => e.ID == employee.ID))
-            {
+        private void validateUniqueness(Employee employee) {
+            if (db.employees.Any(e => e.ID == employee.ID)) {
                 ModelState.AddModelError("ID", "Employee with this ID already exists");
             }
-            if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID))
-            {
+            if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
             }
 
         }
 
         // GET: Employees
-        public async Task<ActionResult> Index()
-        {
+        public async Task<ActionResult> Index() {
             return View(await db.employees.ToListAsync());
         }
 
         // GET: Employees/Details/5
-        public async Task<ActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
+        public async Task<ActionResult> Details(int? id) {
+            if (id == null) {
                 return new BadRequestResult();
             }
             Employee? employee = await db.employees.FindAsync(id);
-            if (employee == null)
-            {
+            if (employee == null) {
                 return new NotFoundResult();
             }
             return View(employee);
         }
 
         // GET: Employees/Create
-        public ActionResult Create()
-        {
+        public ActionResult Create() {
             return View();
         }
 
         // POST: Employees/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(int SalaryInput, string EmployeeType, int ManagerID, [Bind("FirstName, LastName")] Employee employee)
-        {
+        public async Task<ActionResult> Create(int SalaryInput, string EmployeeType, int ManagerID, [Bind("FirstName, LastName")] Employee employee, [FromServices] ISalaryService salaryService) {
             employee.ManagerID = ManagerID;
-            EmployeeTypeParameter employeeType;
-            if (Enum.TryParse(EmployeeType, out employeeType))
-            {
-                switch (employeeType)
-                {
-                    case EmployeeTypeParameter.Employee:
+            EmployeeType employeeType;
+            employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
+            if (Enum.TryParse(EmployeeType, out employeeType)) {
+                switch (employeeType) {
+                    case Models.EmployeeType.Employee:
                         employee.IsManager = false;
                         employee.IsCEO = false;
                         break;
-                    case EmployeeTypeParameter.Manager:
+                    case Models.EmployeeType.Manager:
                         employee.IsManager = true;
                         employee.IsCEO = false;
                         break;
-                    case EmployeeTypeParameter.CEO:
+                    case Models.EmployeeType.CEO:
                         employee.IsManager = true;
                         employee.IsCEO = true;
                         break;
                 }
-            }
-            else
-            {
+            } else {
                 ViewBag.ErrorMessage = $"Employee type {EmployeeType} not recognized";
                 return View(employee);
             }
+            employee.Salary = salaryService.CalculateSalary(employeeType, SalaryInput);
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
-            if (ModelState.IsValid)
-            {
+            if (ModelState.IsValid) {
                 db.employees.Add(employee);
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
@@ -158,15 +127,12 @@ namespace ConsidTechAssessment.Controllers
         }
 
         // GET: Employees/Edit/5
-        public async Task<ActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
+        public async Task<ActionResult> Edit(int? id) {
+            if (id == null) {
                 return new BadRequestResult();
             }
             Employee? employee = await db.employees.FindAsync(id);
-            if (employee == null)
-            {
+            if (employee == null) {
                 return new NotFoundResult();
             }
             return View(employee);
@@ -177,36 +143,31 @@ namespace ConsidTechAssessment.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int SalaryInput, string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee)
-        {
-            EmployeeTypeParameter employeeType;
-            if (Enum.TryParse(EmployeeType, out employeeType))
-            {
-                switch (employeeType)
-                {
-                    case EmployeeTypeParameter.Employee:
+        public async Task<ActionResult> Edit(int SalaryInput, string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee) {
+            EmployeeType employeeType;
+            employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
+            if (Enum.TryParse(EmployeeType, out employeeType)) {
+                switch (employeeType) {
+                    case Models.EmployeeType.Employee:
                         employee.IsManager = false;
                         employee.IsCEO = false;
                         break;
-                    case EmployeeTypeParameter.Manager:
+                    case Models.EmployeeType.Manager:
                         employee.IsManager = true;
                         employee.IsCEO = false;
                         break;
-                    case EmployeeTypeParameter.CEO:
+                    case Models.EmployeeType.CEO:
                         employee.IsManager = true;
                         employee.IsCEO = true;
                         break;
                 }
-            }
-            else
-            {
+            } else {
                 ViewBag.ErrorMessage = $"Employee type {EmployeeType} not recognized";
                 return View(employee);
             }
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
-            if (ModelState.IsValid)
-            {
+            if (ModelState.IsValid) {
                 db.Entry(employee).State = EntityState.Modified;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
@@ -215,15 +176,12 @@ namespace ConsidTechAssessment.Controllers
         }
 
         // GET: Employees/Delete/5
-        public async Task<ActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
+        public async Task<ActionResult> Delete(int? id) {
+            if (id == null) {
                 return new BadRequestResult();
             }
             Employee? employee = await db.employees.FindAsync(id);
-            if (employee == null)
-            {
+            if (employee == null) {
                 return new NotFoundResult();
             }
             return View(employee);
@@ -232,54 +190,32 @@ namespace ConsidTechAssessment.Controllers
         // POST: Employees/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed(int id)
-        {
+        public async Task<ActionResult> DeleteConfirmed(int id) {
             Employee? employee = await db.employees.FindAsync(id);
-            if (employee != null)
-            {
+            if (employee != null) {
                 db.employees.Remove(employee);
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
-            }
-            else
-            {
+            } else {
                 return new NotFoundResult();
             }
         }
 
         /**
-         * A JSON GET METHOD. Returns a list of JSON objects of managers with their ID and Fullname
+         * A JSON GET METHOD. Returns a list of JSON objects of managers with their ID and Fullname. This is called by Javascript code
+         * when we want to populate a list of Managers (for instance in the UI where we we create or edit employees)
          */
         [HttpGet]
-        public async Task<JsonResult> GetManagers()
-        {
+        public async Task<JsonResult> GetManagers() {
             var managers = await db.employees.Where(emp => emp.IsManager).ToListAsync();
-            return Json(managers.Select(man =>
-            {
+            return Json(managers.Select(man => {
                 Console.WriteLine($"Manager requested: {man.FirstName} {man.LastName}");
                 return new { id = man.ID, name = $"{man.FirstName} {man.LastName}" };
             }));
         }
 
-        [HttpGet]
-        public async Task<JsonResult> GetManagerName(int id)
-        {
-            var manager = await db.employees.Where(emp => emp.ID == id).FirstAsync();
-            if (manager == null)
-            {
-                return Json(new { id = -1, name = "Unmanaged" });
-            }
-            else
-            {
-                return Json(new { id = manager.ID, name = manager.FullName });
-            }
-
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
+        protected override void Dispose(bool disposing) {
+            if (disposing) {
                 db.Dispose();
             }
             base.Dispose(disposing);

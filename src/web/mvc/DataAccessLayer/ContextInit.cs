@@ -1,16 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace webapp.mvc.DataAccessLayer
-{
+namespace webapp.mvc.DataAccessLayer {
     using Models;
 
-    public static class SeedDB
-    {
-        public static void Initialize(IServiceProvider provider)
-        {
-            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>()))
-            {
+    public static class SeedDB {
+        public static void Initialize(IServiceProvider provider) {
+            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>())) {
                 // Database should be seeded by the createtables.sql, but if not;
                 ctx.Database.EnsureCreated();
                 if (ctx.libraryItems.Any()) return;

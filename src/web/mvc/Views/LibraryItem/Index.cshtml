@@ -4,34 +4,29 @@
     ViewBag.Title = "Index";
 }
 <style type="text/css">
-    .controls {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-        margin-bottom: 3px;
-    }
+
 </style>
 <h2>Library Items</h2>
 <div class="controls">
-    <p>
+    <div>
         @Html.ActionLink("Create New", "Create", "LibraryItem", new {}, new { @class ="btn btn-primary"})
-    </p>
-    @using (Html.BeginForm("Index", "LibraryItem"))
+    </div>
+    @using (Html.BeginForm("Index", "LibraryItem", FormMethod.Post, new { @class = "search-filter-controls" }))
+
     {
-        <div class="form-group">
-            <div class="col-md-10">
-                <label for="searchString" class="control-label col-md-2">Title filter</label>
-            </div>
-            <div class="col-md-10">
-                @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
-                @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
-            </div>
+        <div>
+            <label for="searchString" class="control-label">Title filter</label>
+        </div>
+        <div>
+            @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
+        </div>
+        <div>
+            @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
         </div>
         <input type="submit" value="Filter" class="btn btn-primary" />
     }
 </div>
-<table class="table">
+<table class="table library-items-table">
     <tr>
         <th>
             @{

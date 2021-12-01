@@ -1,10 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-namespace webapp.mvc.Models
-{
+namespace webapp.mvc.Models {
     [Table("LibraryItem")]
-    public class LibraryItem
-    {
+    public class LibraryItem {
         [Column("ID")]
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -51,10 +49,8 @@ namespace webapp.mvc.Models
 
         [NotMapped]
         [Display(Name = "Library Item")]
-        public string Listing
-        {
-            get
-            {
+        public string Listing {
+            get {
                 // This method gets called when we want to display this library item's name, concatenated with the abbreviation
                 var abbreviation = string.Join("",
                         this.Title.Split(' ')
@@ -75,27 +71,21 @@ namespace webapp.mvc.Models
         public int SelectedCategoryID;
 
         [NotMapped]
-        public bool IsBorrowed
-        {
-            get
-            {
+        public bool IsBorrowed {
+            get {
                 return BorrowDate.HasValue;
             }
         }
         [NotMapped]
-        public string displayDate
-        {
-            get
-            {
+        public string displayDate {
+            get {
                 return BorrowDate?.ToString("yyyy-MM-dd") ?? "";
             }
         }
 
         [NotMapped]
-        public int LengthValue
-        {
-            get
-            {
+        public int LengthValue {
+            get {
                 if (Pages.HasValue) return Pages.Value;
                 else if (RunTimeMinutes.HasValue) return RunTimeMinutes.Value;
                 else return 0;

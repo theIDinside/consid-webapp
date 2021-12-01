@@ -3,10 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace webapp.mvc.Models
-{
-    public class Employee
-    {
+namespace webapp.mvc.Models {
+    public class Employee {
         [Key]
         public int ID { get; set; }
         [Required]
