@@ -28,18 +28,6 @@ public class CategoryController : Controller {
         return View(await db.categoryItems.ToListAsync());
     }
 
-    // GET: Gets the details view for a category with `id`
-    public async Task<ActionResult> Details(int? id) {
-        if (id == null) {
-            return new BadRequestResult();
-        }
-        Category? category = await db.categoryItems.FindAsync(id);
-        if (category == null) {
-            return new NotFoundResult();
-        }
-        return View(category);
-    }
-
     // GET: Returns the view containing the form for creating a Category
     public ActionResult Create() {
         return View();

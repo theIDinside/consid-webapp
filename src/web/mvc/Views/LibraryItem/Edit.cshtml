@@ -87,7 +87,7 @@
 
             <div class="form-group">
                 <div class="col-md-offset-2 col-md-10">
-                    <input type="submit" value="Save changes" class="btn btn-default" />
+                    <input type="submit" value="Save changes" class="btn btn-primary" />
                 </div>
             </div>
             <div class="text-danger">
@@ -235,7 +235,7 @@
 <script type="text/javascript">
     // this is basically a hack, because I don't know how to directly from the onchange, set the parameter to updateEditFields(@Model.LengthValue)
     // so instead, from the onchange on line 42, i delegate to updateEditFields from this function.
-    const doUpdate = () => { updateEditFields(@Model.LengthValue); }
+    const doUpdate = () => { updateEditFields(@Json.Serialize(Model.LengthValue)); }
 
     // I've written my own custom validation here, because I kind of feel the coupling with C# for this stuff
     // is atrocious. This is battled tested Javascript, easy to write, simple to comprehend.
@@ -264,7 +264,7 @@
             }
         });
     }
-    document.addEventListener("DOMContentLoaded", async () => {
+    onDocumentLoaded(async () => {
         // set input field state on page load
         // update form fields to contain values of this library item.
         updateEditFields(@Model.LengthValue);
@@ -272,6 +272,6 @@
         openTab(document.getElementById("EditDetailsButton"), "EditDetailsTab");
         // select the category, which this item belongs to as default selected
         await populateCategoriesList("CategoryID");
-        setSelection(@Model.CategoryID, "CategoryID");
+        setSelection(@Json.Serialize(Model.CategoryID), "CategoryID");
     });
 </script>

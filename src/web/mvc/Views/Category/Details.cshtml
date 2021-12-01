@@ -38,9 +38,9 @@
             return promiseResult.json();
         })
     }
-    document.addEventListener("DOMContentLoaded", () => {
+    onDocumentLoaded(() => {
         let elem = document.getElementById("itemCount");
-        getItemCount(@Model.ID).then(res => {
+        getItemCount(@Json.Serialize(Model.ID)).then(res => {
             elem.innerText = res.count;
         })
     });

@@ -41,7 +41,7 @@ namespace webapp.mvc.Controllers {
                 }
                 if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
                     if (!employee.IsManager && man.IsCEO) {
-
+                        ModelState.AddModelError("ManagerID", $"Employees can not be managed by a CEO");
                     }
                     if (!man.IsManager) {
                         ModelState.AddModelError("ManagerID", $"Employee {man.FullName} (ID: {man.ID}) is not a manager.");
@@ -56,9 +56,6 @@ namespace webapp.mvc.Controllers {
         // Validates an Employee Model object, that is on route for insertion into -> database.
         // Privately mutates the ModelState.
         private void validateUniqueness(Employee employee) {
-            if (db.employees.Any(e => e.ID == employee.ID)) {
-                ModelState.AddModelError("ID", "Employee with this ID already exists");
-            }
             if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
             }
@@ -70,26 +67,15 @@ namespace webapp.mvc.Controllers {
             return View(await db.employees.ToListAsync());
         }
 
-        // GET: Employees/Details/5
-        public async Task<ActionResult> Details(int? id) {
-            if (id == null) {
-                return new BadRequestResult();
-            }
-            Employee? employee = await db.employees.FindAsync(id);
-            if (employee == null) {
-                return new NotFoundResult();
-            }
-            return View(employee);
-        }
-
         // GET: Employees/Create
         public ActionResult Create() {
             return View();
         }
 
         // POST: Employees/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        // Creates an employee & stores it in the database.
+        // It takes an implementation of ISalaryService with the attribute [FromServices] attribute, which means, via Dependency Injection in core, gets injected into this controller action
+        // We could for instance, also have used our own "direct" D.I. by passing an implementer of the interface to the constructor, but the controller action D.I. is even more loosely coupled than that.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(int SalaryInput, string EmployeeType, int ManagerID, [Bind("FirstName, LastName")] Employee employee, [FromServices] ISalaryService salaryService) {
@@ -138,9 +124,6 @@ namespace webapp.mvc.Controllers {
             return View(employee);
         }
 
-        // POST: Employees/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int SalaryInput, string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee) {
@@ -162,8 +145,7 @@ namespace webapp.mvc.Controllers {
                         break;
                 }
             } else {
-                ViewBag.ErrorMessage = $"Employee type {EmployeeType} not recognized";
-                return View(employee);
+                ModelState.AddModelError("EmployeeType", $"Employee type {EmployeeType} not recognized");
             }
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
@@ -209,8 +191,35 @@ namespace webapp.mvc.Controllers {
         public async Task<JsonResult> GetManagers() {
             var managers = await db.employees.Where(emp => emp.IsManager).ToListAsync();
             return Json(managers.Select(man => {
-                Console.WriteLine($"Manager requested: {man.FirstName} {man.LastName}");
                 return new { id = man.ID, name = $"{man.FirstName} {man.LastName}" };
+            }));
+        }
+
+        // Used for asking questions about an employee's manager for instance.
+        // This request must not fail, so when an invalid ID is sent (or any other error occurs) this returns an empty JSON object
+        [HttpGet]
+        public async Task<JsonResult> GetEmployeeInfo(int id) {
+            var e = await db.employees.FirstOrDefaultAsync(e => e.ID == id);
+            if (e != null) {
+                var employeeType = (e.IsManager, e.IsCEO) switch {
+                    (true, true) => "CEO",
+                    (true, false) => "Manager",
+                    _ => "Employee"
+                };
+                return Json(new { id = e.ID, firstname = e.FirstName, lastname = e.LastName, employeetype = employeeType, manager = e.ManagerID ?? -1 });
+            } else {
+                return Json(new { });
+            }
+        }
+
+        // Optional parameters from and count, determine if we are requesting a page of information.
+        // If we have 10000 employees, we might be "browsing" the employee list, and currently want employees in the range
+        // of 125 -> 225 to display, thus the call becomes /Employees/GetRegularEmployees/from/to
+        [HttpGet]
+        public async Task<JsonResult> GetRegularEmployees(int? from, int count = Int32.MaxValue) {
+            var managers = await db.employees.Where(emp => !emp.IsManager).Skip(from ?? 0).Take(count).ToListAsync();
+            return Json(managers.Select(emp => {
+                return new { id = emp.ID, firstname = emp.FirstName, lastname = emp.LastName, managedBy = emp.ManagerID ?? -1 };
             }));
         }
 

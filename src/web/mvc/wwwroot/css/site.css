@@ -41,3 +41,27 @@ body {
 .library-items-table {
   background-color: aliceblue;
 }
+
+.library-items-table tr {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.library-items-table-item:hover {
+  background-color: #399cf3;
+}
+
+.hover-active {
+  background-color: #399cf3;
+}
+
+.library-items-table .library-item-title {
+  width: 80%;
+  max-width: 35%;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.library-items-table .library-item-length {
+  width: auto;
+}

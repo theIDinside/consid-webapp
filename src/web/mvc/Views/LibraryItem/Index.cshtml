@@ -40,7 +40,7 @@
                 }
             }
         </th>
-        <th>
+        <th class="library-item-title">
             <!-- This should not display the Category ID, but the actual category name -->
             @{
                 if (ViewBag.Ordering == "title")
@@ -56,11 +56,8 @@
         <th>
             @Html.DisplayNameFor(model => model.Author)
         </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Pages)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.RunTimeMinutes)
+        <th class="library-items-length">
+            Length
         </th>
         <th>
             @Html.DisplayNameFor(model => model.Borrower)
@@ -81,26 +78,30 @@
             }
 
         </th>
-        <th></th>
+        <th>Update</th>
     </tr>
 
     @foreach (var item in Model)
     {
-        <tr>
+        <tr class="library-items-table-item" onclick='route(`LibraryItem/Edit/${@Json.Serialize(item.ID)}`)'>
             <td>
                 @Html.DisplayFor(modelItem => item.Category.CategoryName)
             </td>
-            <td>
+            <td class="library-item-title">
                 @Html.DisplayFor(modelItem => item.Listing)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Author)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Pages)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RunTimeMinutes)
+            <td class="library-items-length">
+                @{
+                    if (item.Pages.HasValue)
+                    {
+                        <div>@Json.Serialize(item.Pages) pages</div>
+                    } else {
+                        <div>@Json.Serialize(item.RunTimeMinutes) min</div>
+                    }
+                }
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Borrower)
@@ -113,7 +114,6 @@
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id = item.ID }) |
-                @Html.ActionLink("Details", "Details", new { id = item.ID }) |
                 @Html.ActionLink("Delete", "Delete", new { id = item.ID })
             </td>
         </tr>

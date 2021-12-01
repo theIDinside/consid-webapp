@@ -11,12 +11,12 @@ namespace webapp.mvc.Controllers;
     Internal research notes 
     HTTP Request comes in and goes to
                 |-> Middleware
-                |-> Routing     
+                |-> Routing
                 |-> Controller initialization (this is where the factory comes to play)
                 |-> Action Method Execution
                 |                     -----------> Data result sent out
                 |                   /
-                |-> Result Execution 
+                |-> Result Execution
                                     \
                                      \-> View result
                                      |-> View Rendering -> Response sent out
@@ -124,19 +124,6 @@ public class LibraryItemController : Controller {
         }
     }
 
-
-    // GET method
-    public async Task<ActionResult> Details(int? id) {
-        if (id == null) {
-            return new BadRequestResult();
-        }
-
-        if (await db.libraryItems.FindAsync(id) is LibraryItem libraryItem) {
-            return View(libraryItem);
-        } else {
-            return new NotFoundResult();
-        }
-    }
     // GET method
     public ActionResult Create() {
         // We return an empty view, because, we let our custom UI library handle the populating of fields (like the Categories drop down list). 

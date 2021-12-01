@@ -12,7 +12,7 @@
     @Html.AntiForgeryToken()
 
     <div class="form-horizontal">
-        <h4>Category</h4>
+        <h4>Category <div id="itemCount"></div></h4>
         <hr />
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
         @Html.HiddenFor(model => model.ID)
@@ -27,7 +27,7 @@
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Save" class="btn btn-default" />
+                <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </div>
     </div>
@@ -36,3 +36,12 @@
 <div>
     @Html.ActionLink("Back to List", "Index")
 </div>
+
+<script>
+    onDocumentLoaded(() => {
+        let categoryId = @Json.Serialize(Model.ID);
+        getCategoryItemCount(categoryId).then(res => {
+            document.getElementById("itemCount").innerHTML = `(${res.count != undefined ? res.count : 0} items)`
+        })
+    });
+</script>
