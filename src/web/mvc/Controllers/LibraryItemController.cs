@@ -43,11 +43,19 @@ public class LibraryItemController : Controller {
     }
 
     [Route("/LibraryItem/Index")]
-    public async Task<IActionResult> Index(string sortBy, string searchString) {
+    public async Task<IActionResult> Index(string sortBy, string searchString, int? page) {
         SessionOrdering = String.IsNullOrEmpty(sortBy) ? SessionOrdering : sortBy;
-        ViewBag.Filter = searchString;
+
         ViewBag.Ordering = SessionOrdering;
         var items = from i in db.libraryItems select i;
+
+        if (searchString != null) {
+            page = 1;
+        } else {
+            searchString = ViewBag.Filter;
+        }
+        ViewBag.Filter = searchString;
+
         _logger.LogCritical($"Session ordering: {SessionOrdering} : Sort by: {sortBy}");
         items = String.IsNullOrEmpty(searchString) ? items.Include(e => e.Category) : items.Where(item => item.Title.Contains(searchString)).Include(e => e.Category);
         switch (SessionOrdering) {
@@ -70,12 +78,12 @@ public class LibraryItemController : Controller {
                 items = items.OrderByDescending(i => i.Type);
                 break;
         }
-        var result = await items.ToListAsync();
+        var result = await items.GetPagedAsync(page ?? 1, 5);
         _logger.LogDebug("Items:");
         if (result == null) {
             _logger.LogError("COULD NOT RETRIEVE DATA!");
         } else {
-            foreach (var i in result) {
+            foreach (var i in result.Page) {
                 _logger.LogDebug($"[{i.ID}] [{i.Title}] [{i.Author}] [{i.Pages ?? i.RunTimeMinutes}]");
             }
         }
