@@ -4,11 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace webapp.mvc.Models;
 
 public class LibraryItemListViewModel {
-    public string Category;
-    public string Title;
-    public string Author;
-    public string Length;
-    public bool IsAvailable;
-    public string Type;
-
+    public IEnumerable<webapp.mvc.Models.LibraryItem> ModelData { get; set; }
+    public int PageIndex { get; set; }
+    public int PageSize { get; set; }
 }
