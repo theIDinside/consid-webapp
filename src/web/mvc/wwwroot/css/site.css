@@ -65,3 +65,7 @@ body {
 .library-items-table .library-item-length {
   width: auto;
 }
+
+input[type="submit"] {
+  margin-top: 5px;
+}
