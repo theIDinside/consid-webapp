@@ -30,11 +30,12 @@ namespace webapp.mvc.Models {
         public int? RunTimeMinutes { get; set; }
 
         [Column("IsBorrowable")]
-        [Required]
         public bool IsBorrowable { get; set; }
 
+
         [Column("Borrower")]
-        [Required]
+        [Required(AllowEmptyStrings = true)]
+        [DisplayFormat(ConvertEmptyStringToNull = false)]
         [StringLength(100)]
         public string Borrower { get; set; }
 
@@ -66,9 +67,6 @@ namespace webapp.mvc.Models {
         // Caveat here; being this is day 2 of me using C# and ASP.NET, I'm not entirely sure this is idiomatic C#/EF, but it works.
 
         public virtual Category Category { get; set; }
-
-        [NotMapped]
-        public int SelectedCategoryID;
 
         [NotMapped]
         public bool IsBorrowed {
