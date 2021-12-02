@@ -79,12 +79,14 @@
                     @Html.ValidationMessageFor(model => model.RunTimeMinutes, "", new { @class = "text-danger" })
                 </div>
             </div>
-            <div id="borrowFields">
+            <div>
                 @Html.HiddenFor(model => model.IsBorrowable)
+                @Html.ValidationMessageFor(model => model.IsBorrowable, "", new { @class = "text-danger" })
                 @Html.HiddenFor(model => model.Borrower)
+                @Html.ValidationMessageFor(model => model.Borrower, "", new { @class = "text-danger" })
                 @Html.HiddenFor(model => model.BorrowDate)
+                @Html.ValidationMessageFor(model => model.BorrowDate, "", new { @class = "text-danger" })
             </div>
-
             <div class="form-group">
                 <div class="col-md-offset-2 col-md-10">
                     <input type="submit" value="Save changes" class="btn btn-primary" />
@@ -92,8 +94,6 @@
             </div>
             <div class="text-danger">
                 @ViewBag.EditErrorMessage
-            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-            @Html.ValidationMessage("Borrower")
             </div>
         </div>
     }
