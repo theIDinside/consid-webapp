@@ -177,9 +177,19 @@ public class LibraryItemController : Controller {
     }
 
     // POST METHOD
-    [HttpPost]
+    [HttpPost, ActionName("Edit")]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Edit([Bind("ID,CategoryID, Title,Author,Pages,RunTimeMinutes,IsBorrowable,Borrower,BorrowDate,Type")] LibraryItem libraryItem) {
+    public async Task<ActionResult> EditConfirmed(int ID, int CategoryID, string Title, string Author, int? Pages, int? RunTimeMinutes, bool IsBorrowable, string Borrower, DateTime? BorrowDate, string Type) {
+        // NOTE(simon): Bug in ModelState validation? I've set this to "AllowEmptyStrings", I've tried setting it to "minimum length = 1" as well to no avail. All that's left
+        // is clearing it manually. Yay OOP.
+        ModelState.ClearValidationState("Borrower");
+        var libraryItem = new LibraryItem { ID = ID, CategoryID = CategoryID, Title = Title, Author = Author, Pages = Pages, RunTimeMinutes = RunTimeMinutes, IsBorrowable = IsBorrowable, Borrower = Borrower, BorrowDate = BorrowDate, Type = Type };
+        var cat = await db.categoryItems.FindAsync(libraryItem.CategoryID);
+        if (cat == null) {
+            ModelState.AddModelError("CategoryID", $"No category with id {libraryItem.CategoryID} exists");
+        } else {
+            libraryItem.Category = cat;
+        }
         if (libraryItem.Type == "reference book" && libraryItem.BorrowDate.HasValue) {
             var old = await db.libraryItems.FindAsync(libraryItem.ID);
             if (old == null) {
@@ -187,24 +197,19 @@ public class LibraryItemController : Controller {
             }
             var categoriesList = await (from c in db.categoryItems select c).Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
             ViewBag.CategoriesDropdownList = categoriesList;
-            @ViewBag.EditErrorMessage = "This book must be checked in first before it can be changed to a reference book";
-            return View(old);
-        } else {
-            if (!libraryItem.BorrowDate.HasValue) {
-                libraryItem.Borrower = "";
-            }
-            var cat = await db.categoryItems.FindAsync(libraryItem.CategoryID);
-            if (cat == null) {
-                @ViewBag.EditErrorMessage = $"No category with ID {libraryItem.CategoryID} exists";
-                return View(libraryItem);
-            }
-
-            if (ModelState.IsValid) {
-                db.Entry(libraryItem).State = EntityState.Modified;
-                return await db.SaveChangesAsync().ContinueWith(r => RedirectToAction("Index"));
-            }
-            return View(libraryItem);
+            ModelState.AddModelError("Type", "This book must be checked in first before it can be changed to a reference book");
         }
+
+        if (!libraryItem.BorrowDate.HasValue) {
+            libraryItem.Borrower = "";
+        }
+        TryValidateModel(libraryItem);
+        if (ModelState.IsValid) {
+            db.Entry(libraryItem).State = EntityState.Modified;
+            await db.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        return View(await db.libraryItems.FindAsync(ID));
     }
 
     // GET METHOD

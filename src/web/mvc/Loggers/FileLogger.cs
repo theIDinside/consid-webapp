@@ -27,7 +27,8 @@ namespace webapp.mvc.Loggers {
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) {
             if (IsEnabled(logLevel)) {
                 Task.Run(async () => {
-                    var fullFilePath = m_provider.m_options.folderPath + "/" + m_provider.m_options.filePath.Replace("{name}", string.Format("{0}_{1}", DateTimeOffset.UtcNow.ToString("yyyyMMdd"), m_loggerName));
+                    var logFileName = m_provider.m_options.filePath.Replace("{name}", string.Format("{0}_{1}", DateTimeOffset.UtcNow.ToString("yyyyMMdd"), m_loggerName));
+                    var fullFilePath = m_provider.m_options.folderPath + "/" + logFileName;
                     var logRecord = string.Format("{0} [{1}] {2} {3}", "[" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd (HH:mm:ss.fff)") + "]", logLevel.ToString(), formatter(state, exception), exception != null ? exception.StackTrace : "");
                     try {
                         await m_provider.m_fileLock.WaitAsync();
@@ -41,7 +42,7 @@ namespace webapp.mvc.Loggers {
                     finally {
                         // finally branches are of utmost importance when acquiring locks, this goes for any language, because if an exception throws
                         // we will create a dead lock
-                        Console.WriteLine($"{m_loggerName} logged to file {m_provider.m_options.filePath}");
+                        Console.WriteLine($"{m_loggerName} logged to file {fullFilePath}");
                         m_provider.m_fileLock.Release();
                     }
                 });

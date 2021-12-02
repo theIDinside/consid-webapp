@@ -29,28 +29,29 @@ namespace webapp.mvc.Controllers {
         // Let's not forget either; these things come with a pretty hefty cost. Virtual tables ever increasing in size, virtual dispatch adding multiple layers of indirection (and CPU cache misses)
         // Design is everything, obviously, but it also has to be non-pessimized design, otherwise we be slow. And if we're slow, we're ramping up electricity costs for the companies we're supposed
         // to do digitalization for. Just a little rant from me.
-        private async void validateManagerIDAttribute(Employee employee) {
-            if (employee.ManagerID != null) {
-                if (employee.ManagerID == employee.ID) {
-                    ModelState.AddModelError("ManagerID", "An employee can not manage oneself");
-                    return;
-                }
-                if (employee.IsCEO) {
-                    ModelState.AddModelError("ManagerID", "A CEO can not be managed by someone");
-                    return;
-                }
-                if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
-                    if (!employee.IsManager && man.IsCEO) {
-                        ModelState.AddModelError("ManagerID", $"Employees can not be managed by a CEO");
+        private void validateManagerIDAttribute(Employee employee) {
+            Task.Run(async () => {
+                if (employee.ManagerID != null) {
+                    if (employee.ManagerID == employee.ID) {
+                        ModelState.AddModelError("ManagerID", "An employee can not manage oneself");
+                        return;
                     }
-                    if (!man.IsManager) {
-                        ModelState.AddModelError("ManagerID", $"Employee {man.FullName} (ID: {man.ID}) is not a manager.");
+                    if (employee.IsCEO) {
+                        ModelState.AddModelError("ManagerID", "A CEO can not be managed by someone");
+                        return;
                     }
-                } else {
-                    ModelState.AddModelError("ManagerID", $"No manager found with id {employee.ManagerID}");
+                    if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
+                        if (!employee.IsManager && man.IsCEO) {
+                            ModelState.AddModelError("ManagerID", $"Employees can not be managed by a CEO");
+                        }
+                        if (!man.IsManager) {
+                            ModelState.AddModelError("ManagerID", $"Employee {man.FullName} (ID: {man.ID}) is not a manager.");
+                        }
+                    } else {
+                        ModelState.AddModelError("ManagerID", $"No manager found with id {employee.ManagerID}");
+                    }
                 }
-            }
-
+            }).Wait();
         }
 
         // Validates an Employee Model object, that is on route for insertion into -> database.
@@ -79,7 +80,6 @@ namespace webapp.mvc.Controllers {
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(int SalaryInput, string EmployeeType, int ManagerID, [Bind("FirstName, LastName")] Employee employee, [FromServices] ISalaryService salaryService) {
-            employee.ManagerID = ManagerID;
             EmployeeType employeeType;
             employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
             if (Enum.TryParse(EmployeeType, out employeeType)) {
@@ -128,6 +128,7 @@ namespace webapp.mvc.Controllers {
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int SalaryInput, string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee) {
             EmployeeType employeeType;
+            // the HTTP POST protocol can't post "null" values (it doesn't know what that is. It would post empty fields. We post -1 to represent "null")
             employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
             if (Enum.TryParse(EmployeeType, out employeeType)) {
                 switch (employeeType) {
@@ -173,11 +174,19 @@ namespace webapp.mvc.Controllers {
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id) {
-            Employee? employee = await db.employees.FindAsync(id);
-            if (employee != null) {
-                db.employees.Remove(employee);
-                await db.SaveChangesAsync();
-                return RedirectToAction("Index");
+            if (await db.employees.FindAsync(id) is Employee employee) {
+                if (employee.IsCEO || employee.IsManager) {
+                    if (await db.employees.AnyAsync(e => e.ManagerID == employee.ID)) {
+                        ModelState.AddModelError("ManagerID", "This person manages other employees and therefore can't be deleted.");
+                    }
+                }
+                if (ModelState.IsValid) {
+                    db.employees.Remove(employee);
+                    await db.SaveChangesAsync();
+                    return RedirectToAction("Index");
+                } else {
+                    return View(employee);
+                }
             } else {
                 return new NotFoundResult();
             }
@@ -216,11 +225,27 @@ namespace webapp.mvc.Controllers {
         // If we have 10000 employees, we might be "browsing" the employee list, and currently want employees in the range
         // of 125 -> 225 to display, thus the call becomes /Employees/GetRegularEmployees/from/to
         [HttpGet]
-        public async Task<JsonResult> GetRegularEmployees(int? from, int count = Int32.MaxValue) {
-            var managers = await db.employees.Where(emp => !emp.IsManager).Skip(from ?? 0).Take(count).ToListAsync();
+        public async Task<JsonResult> GetRegularEmployeesPaged(int? from, int? count) {
+            var managers = await db.employees.Where(emp => !emp.IsManager).Skip(from ?? 0).Take(count ?? Int32.MaxValue).ToListAsync();
             return Json(managers.Select(emp => {
                 return new { id = emp.ID, firstname = emp.FirstName, lastname = emp.LastName, managedBy = emp.ManagerID ?? -1 };
             }));
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetManagersPaged(int? from, int? count) {
+            var managers = await db.employees.Where(emp => emp.IsManager && !emp.IsCEO).Skip(from ?? 0).Take(count ?? Int32.MaxValue).ToListAsync();
+            return Json(managers.Select(emp => {
+                return new { id = emp.ID, firstname = emp.FirstName, lastname = emp.LastName, managedBy = emp.ManagerID ?? -1 };
+            }));
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetCEO() {
+            if (await db.employees.FirstOrDefaultAsync(e => e.IsCEO) is Employee ceo) {
+                return Json(new { id = ceo.ID, firstname = ceo.FirstName, lastname = ceo.LastName, managedBy = ceo.ManagerID ?? -1 });
+            } else {
+                return Json(new { });
+            }
         }
 
         protected override void Dispose(bool disposing) {
