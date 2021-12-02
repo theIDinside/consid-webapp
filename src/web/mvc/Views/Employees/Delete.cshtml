@@ -51,7 +51,7 @@
             Managed by
         </dt>
         <dd id="ManagedBy"></dd>
-
+        @Html.ValidationMessageFor(model => model.ManagerID, "", new { @class = "text-danger" })
     </dl>
 
     @using (Html.BeginForm())
