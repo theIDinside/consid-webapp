@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace webapp.mvc.Models;
 
+// View model that wraps the Entity Framework Models returned by the controllers.
+// Is used for pagination.
 public abstract class BasePagedViewModel {
     public int PageIndex { get; }
     public int TotalPages { get; }
@@ -33,18 +35,20 @@ public class PagedViewModel<T> : BasePagedViewModel where T : class {
     }
 }
 
-// Extension function implementations. So that we can say items.GetPagedAsync(somePageNum, itemsPerPage)
+// Extension function implementations. So that we can say db.libraryItems.GetPagedAsync(somePageNum, itemsPerPage)
 public static class PagedQueryExtension {
     public async static Task<PagedViewModel<T>> GetPagedAsync<T>(this IQueryable<T> query, int page, int pageSize) where T : class {
         var totalRowCount = 0;
         // we try fast Count first. I'm not sure if this will do anything with SQL requests, but I would hope
         // the good people at Microsoft and those developing EF to know what they're doing for exposing this to the API
         // the TryGetNonEnumeratedCount first tries to get count, without "realizing" a list/result (say for instance, the type holds a field that has the value "Count" already, it will/should read that first)
+        // thus making that count a lot faster
         if (!query.TryGetNonEnumeratedCount(out totalRowCount)) {
             totalRowCount = await query.CountAsync();
         }
 
         var totalPageCount = (int)Math.Ceiling((double)totalRowCount / pageSize);
+        page = Math.Max(Math.Min(page, totalPageCount), 1);
         var result = new PagedViewModel<T>(page, totalPageCount, pageSize, totalRowCount);
         result.Page = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return result;

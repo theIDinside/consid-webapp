@@ -1,84 +1,128 @@
-﻿@model IEnumerable<webapp.mvc.Models.Employee>
+﻿@using webapp.mvc.Models;
+@model webapp.mvc.Models.PagedViewModel<Employee>
 
 @{
     ViewBag.Title = "Index";
 }
+<!-- For using some of our nice features -->
 
 <h2>Index</h2>
-
-<p>
-    @Html.ActionLink("Create New", "Create", "Employees", new {}, new { @class ="btn btn-primary"})
-</p>
-<table class="table library-items-table">
-    <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.FirstName)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.LastName)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Salary)
-        </th>
-        <th>
-            Position
-        </th>
-        <th>
-            Managed by
-        </th>
-        <th>Manage employee record</th>
-    </tr>
-
-    @foreach (var item in Model)
-    {
-        <tr class="library-items-table-item">
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Salary)
-            </td>
-            <td>
-                @if (item.IsCEO)
-                {
-                    <div>CEO</div>
-                }
-                else if (item.IsManager)
-                {
-                    <div>Manager</div>
-                }
-                else
-                {
-                    <div>Employee</div>
-                }
-            </td>
-            <td class="managerIdContainer">
-                @if (item.ManagerID == null)
-                {
-                    <div>-1</div>
-                }
-                else
-                {
-                    <div>@item.ManagerID</div>
-                }
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { id=item.ID }) |
-                @Html.ActionLink("Delete", "Delete", new { id=item.ID })
-            </td>
-        </tr>
+<div class="controls">
+    <div>
+        @Html.ActionLink("Create New", "Create", "Employees", new {}, new { @class ="btn btn-primary"})
+    </div>
+        @using (Html.BeginForm("Index", "Employees", FormMethod.Post, new { @class = "search-filter-controls" })) {
+        <input type="hidden" value="@Model.PageIndex" name="page">
+        <label for="employeeFilter">View</label>
+        <select id="employeeFilter", name="employeeFilter" class="form-select">
+            <option value="1">Employees</option>
+            <option value="2">Managers</option>
+            <option value="3">CEO</option>
+            <option value="4">All employees</option>
+        </select>
+        <input type="submit" value="Filter" class="btn btn-primary" />
     }
+</div>
+<div>
+    <table class="table library-items-table">
+        <tr>
+            <th>
+                First name
+            </th>
+            <th>
+                Last Name
+            </th>
+            <th>
+                Salary
+            </th>
+            <th>
+                Position
+            </th>
+            <th>
+                Managed by
+            </th>
+            <th>Manage employee record</th>
+        </tr>
 
-</table>
+        @foreach (var item in Model.Page)
+        {
+            <tr class="library-items-table-item" onclick='route(`Employees/Edit/${@Json.Serialize(item.ID)}`)'>
+                <td>
+                    @Html.DisplayFor(modelItem => item.FirstName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LastName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Salary)
+                </td>
+                <td>
+                    @if (item.IsCEO)
+                    {
+                        <div>CEO</div>
+                    }
+                    else if (item.IsManager)
+                    {
+                        <div>Manager</div>
+                    }
+                    else
+                    {
+                        <div>Employee</div>
+                    }
+                </td>
+                <td class="managerIdContainer">
+                    @if (item.ManagerID == null)
+                    {
+                        <div>-1</div>
+                    }
+                    else
+                    {
+                        <div>@item.ManagerID</div>
+                    }
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id=item.ID }) |
+                    @Html.ActionLink("Delete", "Delete", new { id=item.ID })
+                </td>
+            </tr>
+        }
 
+    </table>
+</div>
+<br>
+
+@if(@Model.TotalPages <= 5) {
+    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">&larr;</a>
+    for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber) {
+        if(pageNumber == @ViewBag.CurrentPage) {
+            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary webapp-active">@pageNumber</a>
+        } else {
+            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">@pageNumber</a>
+        }
+    }
+    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">&rarr;</a>
+} else {
+    var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
+    var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
+    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">&larr;</a>
+    for(var pageNumber = start; pageNumber <= end; pageNumber++) {
+        if(pageNumber == @ViewBag.CurrentPage) {
+            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary webapp-active">@pageNumber</a>
+        } else {
+            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">@pageNumber</a>
+        }
+    }
+    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary">&rarr;</a>
+}
 <script>
     onDocumentLoaded(() => {
         // we wait until page is loaded, and then we do a splat of all managers in the DB. This way,
         // we don't have to do one asynchronous call per row, but instead just grab all managers and then edit the DOM and set
-        // data accordingly.
+        // data accordingly. So why am I not doing this on the server? Because; this increases speed for the actual *user* of the application.
+        // If we assume (which I have) that the users of this application aren't many (many as in tens to hundreds of thousands)
+        // we want the page to display something as quickly as possible. Thus, the list displaying quickly, is what I would want, in *any* scenario, at *any* time.
+        // After the page is displayed, we replace the manager ID's in the "Managed By" column, asynchronously with this Web Standards .fetch() call. The user experience is more important than *anything*.
+        // And unfortunately, today, user experience on "web" type applications is at an all time low.
         fetch("/Employees/GetManagers").then(response => response.json()).then(managers => {
             let managerInfoList = document.getElementsByClassName("managerIdContainer");
             for (let domElement of managerInfoList) {
@@ -94,5 +138,7 @@
                 }
             }
         });
+        const groupBySelectionId = @Json.Serialize(@ViewBag.GroupBy) ?? 3;
+        setSelection(groupBySelectionId, "employeeFilter");
     });
 </script>

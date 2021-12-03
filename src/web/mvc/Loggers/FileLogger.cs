@@ -31,7 +31,7 @@ namespace webapp.mvc.Loggers {
                     var fullFilePath = m_provider.m_options.folderPath + "/" + logFileName;
                     var logRecord = string.Format("{0} [{1}] {2} {3}", "[" + DateTimeOffset.UtcNow.ToString("yyyy-MM-dd (HH:mm:ss.fff)") + "]", logLevel.ToString(), formatter(state, exception), exception != null ? exception.StackTrace : "");
                     try {
-                        await m_provider.m_fileLock.WaitAsync();
+                        await m_provider.mutexFileLock.WaitAsync();
                         using (var streamWriter = new StreamWriter(fullFilePath, true)) {
                             streamWriter.WriteLine(logRecord);
                         }
@@ -43,7 +43,7 @@ namespace webapp.mvc.Loggers {
                         // finally branches are of utmost importance when acquiring locks, this goes for any language, because if an exception throws
                         // we will create a dead lock
                         Console.WriteLine($"{m_loggerName} logged to file {fullFilePath}");
-                        m_provider.m_fileLock.Release();
+                        m_provider.mutexFileLock.Release();
                     }
                 });
             }
@@ -61,10 +61,10 @@ namespace webapp.mvc.Loggers {
         public readonly FileLoggerOptions m_options;
         // grab a "cheap" mutex (mutexes are never cheap, but they are necessary). Since our logging is asynchronous, we have to guard at potentially
         // having multiple threads writing to our file logger
-        public SemaphoreSlim m_fileLock;
+        public SemaphoreSlim mutexFileLock;
 
         public FileLoggerProvider(IOptions<FileLoggerOptions> options) {
-            m_fileLock = new SemaphoreSlim(1, 1);
+            mutexFileLock = new SemaphoreSlim(1, 1);
             m_options = options.Value;
             if (!Directory.Exists(m_options.folderPath)) {
                 Directory.CreateDirectory(m_options.folderPath);

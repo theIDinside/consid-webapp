@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using webapp.mvc.Services;
 
 namespace webapp.mvc.Controllers;
 /*
@@ -26,37 +27,36 @@ public class LibraryItemController : Controller {
     private readonly ILogger<LibraryItemController> _logger;
     private LibraryContext db;
 
+    // The ordering of library items. Stays alive for the session or until a user idles out (after 1 hr)
     private String SessionOrdering {
         get {
             if (this.HttpContext.Session.GetString("Ordering") == null) {
                 this.SessionOrdering = "cat";
             }
-            return this.HttpContext.Session.GetString("Ordering") ?? "cat";
+            return this.HttpContext.Session.GetString("Ordering");
         }
         set { this.HttpContext.Session.SetString("Ordering", value); }
     }
 
     public LibraryItemController(ILogger<LibraryItemController> logger, LibraryContext ctx) {
-
         _logger = logger;
         db = ctx;
     }
 
     [Route("/LibraryItem/Index")]
-    public async Task<IActionResult> Index(string sortBy, string searchString, int? page) {
+    public async Task<IActionResult> Index(string sortBy, string searchString, int? page, [FromServices] PageSizeService pageSizeService) {
         SessionOrdering = String.IsNullOrEmpty(sortBy) ? SessionOrdering : sortBy;
-
+        ViewBag.CurrentPage = page ?? 1;
         ViewBag.Ordering = SessionOrdering;
         var items = from i in db.libraryItems select i;
 
         if (searchString != null) {
-            page = 1;
+            ViewBag.CurrentPage = 1;
+            ViewBag.Filter = searchString;
         } else {
             searchString = ViewBag.Filter;
         }
-        ViewBag.Filter = searchString;
 
-        _logger.LogCritical($"Session ordering: {SessionOrdering} : Sort by: {sortBy}");
         items = String.IsNullOrEmpty(searchString) ? items.Include(e => e.Category) : items.Where(item => item.Title.Contains(searchString)).Include(e => e.Category);
         switch (SessionOrdering) {
             case "cat":
@@ -78,16 +78,17 @@ public class LibraryItemController : Controller {
                 items = items.OrderByDescending(i => i.Type);
                 break;
         }
-        var result = await items.GetPagedAsync(page ?? 1, 5);
+        var viewModel = await items.GetPagedAsync(page ?? 1, pageSizeService.PageSize);
+        ViewBag.CurrentPage = viewModel.PageIndex;
         _logger.LogDebug("Items:");
-        if (result == null) {
+        if (viewModel == null) {
             _logger.LogError("COULD NOT RETRIEVE DATA!");
         } else {
-            foreach (var i in result.Page) {
+            foreach (var i in viewModel.Page) {
                 _logger.LogDebug($"[{i.ID}] [{i.Title}] [{i.Author}] [{i.Pages ?? i.RunTimeMinutes}]");
             }
         }
-        return View(result);
+        return View(viewModel);
     }
 
 
@@ -118,6 +119,7 @@ public class LibraryItemController : Controller {
 
     }
 
+    // Controller action that "returns" a library item
     public async Task<ActionResult> CheckIn(int? id) {
         if (await db.libraryItems.FindAsync(id) is LibraryItem libraryItem) {
             libraryItem.BorrowDate = null;
@@ -134,14 +136,17 @@ public class LibraryItemController : Controller {
 
     // GET method
     public ActionResult Create() {
-        // We return an empty view, because, we let our custom UI library handle the populating of fields (like the Categories drop down list). 
+        // We return an empty view, because, we let our custom UI library handle the populating of fields (like the Categories drop down list).
+        // Note to consid: Since I am new to C#, ASP and it's frameworks, I realize that praxis is that one uses the Model-View-ViewModel design
+        // but, at some point, I have to hand in this assignment. With the understanding of asp core that I have now, after a week and a half, I would have
+        // instead went with that designs. Instead, I handle a lot of this stuff with Javascript calling into controller actions from the client side
         return View();
     }
 
     // POST METHOD
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Create([Bind("CategoryID,Title,Author,Pages,RunTimeMinutes,IsBorrowable,Borrower,BorrowDate,Type")] LibraryItem libraryItem) {
+    public async Task<ActionResult> Create([Bind("CategoryID, Category, Title,Author,Pages,RunTimeMinutes,IsBorrowable,Borrower,BorrowDate,Type")] LibraryItem libraryItem) {
         if (!libraryItem.BorrowDate.HasValue && libraryItem.Borrower == null) libraryItem.Borrower = ""; // as per requirement doc. for some reason, Borrower should not be nullable
         if (libraryItem.Type == "reference book" && libraryItem.BorrowDate.HasValue) {
             ModelState.AddModelError("Type", "Reference book can not be borrowed. Only books, dvd's and audio books can be borrowerd");

@@ -1,6 +1,7 @@
 using webapp.mvc.Models;
 namespace webapp.mvc.Services;
 
+// The implementation of the interface ISalaryService, a service for calculating the salary of an employee
 public class InputRankSalaryService : ISalaryService {
     public decimal CalculateSalary(EmployeeType employeeType, int SalaryInputRank) {
         var coefficient = employeeType switch {

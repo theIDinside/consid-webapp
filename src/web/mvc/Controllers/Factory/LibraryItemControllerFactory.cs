@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
-
+/*
 namespace mvc.Controllers.Factory {
     public class LibraryItemControllerFactory : IControllerFactory {
         public object CreateController(ControllerContext context) {
@@ -14,3 +14,4 @@ namespace mvc.Controllers.Factory {
         }
     }
 }
+*/

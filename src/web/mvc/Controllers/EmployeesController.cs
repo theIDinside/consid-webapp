@@ -1,19 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net;
-using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Services;
 namespace webapp.mvc.Controllers {
-
-
-
     public class EmployeesController : Controller {
 
         private readonly LibraryContext db;
@@ -23,12 +14,7 @@ namespace webapp.mvc.Controllers {
             _logger = logger;
         }
 
-        // Depdendency injection can be good. I love dependency injection. But in order to do *real* D.I., passing an interface along to the constructor
-        // I now have to implement IControllerFactory. Which means I have to know what those 3 methods do, in order to be efficient and keep the complexity down.
-        // At some point, one must stop and ask oneself; how much complexity am I adding, for the sake of sticking to GoF patterns and SOLID, DRY, so on and so forth?
-        // Let's not forget either; these things come with a pretty hefty cost. Virtual tables ever increasing in size, virtual dispatch adding multiple layers of indirection (and CPU cache misses)
-        // Design is everything, obviously, but it also has to be non-pessimized design, otherwise we be slow. And if we're slow, we're ramping up electricity costs for the companies we're supposed
-        // to do digitalization for. Just a little rant from me.
+        // Validates the employee info, so that creation and editing of an employee follows the rules laid out in the requirements document
         private void validateManagerIDAttribute(Employee employee) {
             Task.Run(async () => {
                 if (employee.ManagerID != null) {
@@ -54,8 +40,7 @@ namespace webapp.mvc.Controllers {
             }).Wait();
         }
 
-        // Validates an Employee Model object, that is on route for insertion into -> database.
-        // Privately mutates the ModelState.
+        // Makes sure that this employee is not a CEO while there already exists one.
         private void validateUniqueness(Employee employee) {
             if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
@@ -63,13 +48,34 @@ namespace webapp.mvc.Controllers {
 
         }
 
+        public const int EmployeeFilterNoManagers = 1;
+        public const int EmployeeFilterManagers = 2;
+        public const int EmployeeFilterCEO = 3;
+        public const int EmployeeFilterAll = 4;
         // GET: Employees
-        public async Task<ActionResult> Index() {
-            return View(await db.employees.ToListAsync());
+        public async Task<ActionResult> Index(int? page, int? employeeFilter, [FromServices] PageSizeService pageSizeService) {
+            // if no employee filter is passed; display all
+            var type = employeeFilter ?? EmployeeFilterAll;
+            type = type > EmployeeFilterAll ? EmployeeFilterAll : type;
+            ViewBag.GroupBy = type;
+
+            // thank god for pattern matching. C# has finally "arrived."
+            var viewModel = type switch {
+                EmployeeFilterNoManagers => await db.employees.Where(e => !e.IsManager).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterManagers => await db.employees.Where(e => e.IsManager && !e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterCEO => await db.employees.Where(e => e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                _ => await db.employees.GetPagedAsync(page ?? 1, pageSizeService.PageSize) // default case, or EmployeeFilterAll
+            };
+            ViewBag.CurrentPage = viewModel.PageIndex;
+            return View(viewModel);
         }
 
         // GET: Employees/Create
+        [HttpGet]
         public ActionResult Create() {
+            // Note to consid: Since I am new to C#, ASP and it's frameworks, I realize that praxis is that one uses the Model-View-ViewModel design
+            // but, at some point, I have to hand in this assignment. With the understanding of asp core that I have now, after a week and a half, I would have
+            // instead went with that designs. Instead, I handle a lot of this stuff with Javascript calling into controller actions from the client side
             return View();
         }
 
@@ -126,7 +132,7 @@ namespace webapp.mvc.Controllers {
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int SalaryInput, string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee) {
+        public async Task<ActionResult> Edit(string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,Salary, ManagerID")] Employee employee) {
             EmployeeType employeeType;
             // the HTTP POST protocol can't post "null" values (it doesn't know what that is. It would post empty fields. We post -1 to represent "null")
             employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
@@ -216,33 +222,6 @@ namespace webapp.mvc.Controllers {
                     _ => "Employee"
                 };
                 return Json(new { id = e.ID, firstname = e.FirstName, lastname = e.LastName, employeetype = employeeType, manager = e.ManagerID ?? -1 });
-            } else {
-                return Json(new { });
-            }
-        }
-
-        // Optional parameters from and count, determine if we are requesting a page of information.
-        // If we have 10000 employees, we might be "browsing" the employee list, and currently want employees in the range
-        // of 125 -> 225 to display, thus the call becomes /Employees/GetRegularEmployees/from/to
-        [HttpGet]
-        public async Task<JsonResult> GetRegularEmployeesPaged(int? from, int? count) {
-            var managers = await db.employees.Where(emp => !emp.IsManager).Skip(from ?? 0).Take(count ?? Int32.MaxValue).ToListAsync();
-            return Json(managers.Select(emp => {
-                return new { id = emp.ID, firstname = emp.FirstName, lastname = emp.LastName, managedBy = emp.ManagerID ?? -1 };
-            }));
-        }
-
-        [HttpGet]
-        public async Task<JsonResult> GetManagersPaged(int? from, int? count) {
-            var managers = await db.employees.Where(emp => emp.IsManager && !emp.IsCEO).Skip(from ?? 0).Take(count ?? Int32.MaxValue).ToListAsync();
-            return Json(managers.Select(emp => {
-                return new { id = emp.ID, firstname = emp.FirstName, lastname = emp.LastName, managedBy = emp.ManagerID ?? -1 };
-            }));
-        }
-        [HttpGet]
-        public async Task<JsonResult> GetCEO() {
-            if (await db.employees.FirstOrDefaultAsync(e => e.IsCEO) is Employee ceo) {
-                return Json(new { id = ceo.ID, firstname = ceo.FirstName, lastname = ceo.LastName, managedBy = ceo.ManagerID ?? -1 });
             } else {
                 return Json(new { });
             }

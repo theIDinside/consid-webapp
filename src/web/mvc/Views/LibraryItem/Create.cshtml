@@ -94,7 +94,7 @@
         <div class="form-group">
             <label for="CategoryID" class="control-label col-md-2">Category</label>
             <div class="col-md-10">
-                <select id="CategoryID" name="CategoryID" class="form-control"></select>
+                <select id="CategoryID" name="CategoryID" class="form-select"></select>
             </div>
         </div>
         <div class="form-group">
@@ -106,7 +106,7 @@
             new SelectListItem { Value = "reference book", Text = "Reference book" },
             new SelectListItem { Value = "dvd", Text = "DVD" },
             new SelectListItem { Value = "audio book", Text = "Audio Book" }
-            }, new { @class = "form-control", @onchange = "updateCreateFields()" }
+            }, new { @class = "form-select", @onchange = "updateCreateFields()" }
             )
 
                 @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
