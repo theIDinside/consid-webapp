@@ -1,11 +1,9 @@
-﻿@model IEnumerable<webapp.mvc.Models.LibraryItem>
+﻿@using webapp.mvc.Models;
+@model webapp.mvc.Models.PagedViewModel<LibraryItem>
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
 @{
     ViewBag.Title = "Index";
 }
-<style type="text/css">
-
-</style>
 <h2>Library Items</h2>
 <div class="controls">
     <div>
@@ -18,7 +16,7 @@
             <label for="searchString" class="control-label">Title filter</label>
         </div>
         <div>
-            @Html.TextBox("searchString", null, new { @placeholder = "Filter items by..."})
+            @Html.TextBox("searchString", null, new { @value = @ViewBag.Filter, @placeholder = "Filter items by..."})
         </div>
         <div>
             @Html.Hidden("sortBy", new { sortBy = ViewBag.Ordering })
@@ -54,16 +52,16 @@
             }
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Author)
+            Author
         </th>
         <th class="library-items-length">
             Length
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Borrower)
+            Borrower
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.BorrowDate)
+            Borrow date
         </th>
         <th>
             @{
@@ -81,17 +79,17 @@
         <th>Update</th>
     </tr>
 
-    @foreach (var item in Model)
+    @foreach (var item in Model.Page)
     {
         <tr class="library-items-table-item" onclick='route(`LibraryItem/Edit/${@Json.Serialize(item.ID)}`)'>
             <td>
-                @Html.DisplayFor(modelItem => item.Category.CategoryName)
+                @item.Category.CategoryName
             </td>
             <td class="library-item-title">
-                @Html.DisplayFor(modelItem => item.Listing)
+                @item.Listing
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Author)
+                @item.Author
             </td>
             <td class="library-items-length">
                 @{
@@ -104,13 +102,13 @@
                 }
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Borrower)
+                @item.Borrower
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.displayDate)
+                @item.displayDate
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Type)
+                @item.Type
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id = item.ID }) |
@@ -118,5 +116,28 @@
             </td>
         </tr>
     }
-
 </table>
+<br>
+@if(Model.TotalPages <= 5) {
+    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter })" class="btn btn-primary">&larr;</a>
+    @for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber) {
+        if(pageNumber == @ViewBag.CurrentPage) {
+            <a href="@Url.Action("Index", new { page = pageNumber , searchString = @ViewBag.Filter })" class="btn btn-primary webapp-active">@pageNumber</a>
+        } else {
+            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary">@pageNumber</a>
+        }
+    }
+    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })" class="btn btn-primary">&rarr;</a>
+} else {
+    var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
+    var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
+    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter  })" class="btn btn-primary">&larr;</a>
+    for(var pageNumber = start; pageNumber <= end; pageNumber++) {
+        if(pageNumber == @ViewBag.CurrentPage) {
+            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary webapp-active">@pageNumber</a>
+        } else {
+            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary">@pageNumber</a>
+        }
+    }
+    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })" class="btn btn-primary">&rarr;</a>
+}

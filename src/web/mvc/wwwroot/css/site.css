@@ -66,6 +66,10 @@ body {
   width: auto;
 }
 
+.webapp-active {
+  background-color: #ff6a00 !important;
+}
+
 input[type="submit"] {
   margin-top: 5px;
 }

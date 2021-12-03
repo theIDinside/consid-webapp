@@ -9,9 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 // Add services to the container.
 builder.Services.AddDbContext<webapp.mvc.DataAccessLayer.LibraryContext>(options => {
-    // NB(for consid): we've set up this database connection in appsettings.json.
-    // If you need to test against your own database, change the values there (port, hostname etc)
-
+    // NB(for consid): we've set up this database connection in appsettings.Development.json.
+    // If you need to test against your own database, change the values there (port, hostname etc).
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
@@ -23,6 +22,8 @@ builder.Services.AddSession(options => {
     options.Cookie.IsEssential = true;
 });
 
+
+// Playing around with some logging services to find out what SQL queries that the entity framework end up doing.
 builder.Services.AddLogging(cfg => {
     cfg.AddDebug();
     cfg.AddConsole();
@@ -30,7 +31,6 @@ builder.Services.AddLogging(cfg => {
         builder.Configuration.GetSection("Logging").GetSection("FileLogging").Bind(cfg);
     });
 });
-
 
 // Technically, we could just have "InputRankService" here, which takes a list of options
 // for what the co-efficient should be, But I've just provided the "WalmartService" here as an example
@@ -54,8 +54,15 @@ switch (salaryService) {
         break;
 }
 
+// So that we can set the page size in appsettings.Development.json, or appsettings.Release.json, or appsettings.json
+// this is not technically how you're supposed to use services, but I made this quick hack, so that you can change the settings, without rebuilding the project, just
+// change the value PageSize in appsettings.Development.json to whatever number you want and there you go.
+var pageSize = builder.Configuration.GetValue<int>("PageSize");
+pageSize = (pageSize < 0) ? 5 : pageSize;
+var pageSizeService = new PageSizeService(pageSize);
+builder.Services.AddSingleton<PageSizeService>(pageSizeService);
+// build the app, with the configurations and settings we've provided, the services etc
 var app = builder.Build();
-
 using (var scope = app.Services.CreateScope()) {
     var services = scope.ServiceProvider;
     // We seed the database, if none exists.
@@ -66,12 +73,15 @@ using (var scope = app.Services.CreateScope()) {
 if (!app.Environment.IsDevelopment()) {
     app.UseExceptionHandler("/Home/Error");
 }
+// we want to use static files in wwwroot
 app.UseStaticFiles();
-
+// we want to use routing
 app.UseRouting();
+// we want to be able to store cookies, which is used for keeping track of the ordering of library items
+// this makes it stay alive during the use of the application (until the user closes the window or goes idle)
 app.UseSession();
+
 app.UseAuthorization();
-
+// define default route patterns, such as /LibraryItem/Index, LibraryItem/Edit/4, with similar patterns for employees
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-
 app.Run();

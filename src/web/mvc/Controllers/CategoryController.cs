@@ -38,8 +38,7 @@ public class CategoryController : Controller {
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> Create([Bind("CategoryName")] Category category) {
         if (await db.categoryItems.AnyAsync(cat => cat.CategoryName == category.CategoryName)) {
-            ViewBag.ErrMsgCategoryNameExists = $"A category with name {category.CategoryName} already exists, you must choose another one.";
-            return View(category);
+            ModelState.AddModelError("CategoryName", $"A category with name {category.CategoryName} already exists, you must choose another one.");
         }
         if (ModelState.IsValid) {
             db.categoryItems.Add(category);
@@ -65,7 +64,10 @@ public class CategoryController : Controller {
     // POST: The actual operation for editing a category
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Edit([Bind("CategoryID,CategoryName")] Category category) {
+    public async Task<ActionResult> Edit([Bind("ID,CategoryName")] Category category) {
+        if (await db.categoryItems.AnyAsync(c => c.CategoryName == category.CategoryName)) {
+            ModelState.AddModelError("CategoryName", "A category with that name already exists");
+        }
         if (ModelState.IsValid) {
             db.Entry(category).State = EntityState.Modified;
             await db.SaveChangesAsync();
@@ -94,13 +96,14 @@ public class CategoryController : Controller {
         var category = await db.categoryItems.FindAsync(id);
         var hasEntitiesWithFKCategoryId = await db.libraryItems.AnyAsync(libitem => libitem.CategoryID == id);
         if (hasEntitiesWithFKCategoryId) {
-            ViewBag.ErrorMessage = "This category has items in it. You need to either delete those library items or move them to another category.";
-            return View(category);
+            ModelState.AddModelError("CategoryName", "This category has items in it. You need to either delete those library items or move them to another category.");
         }
-
-        db.categoryItems.Remove(category);
-        await db.SaveChangesAsync();
-        return RedirectToAction("Index");
+        if (ModelState.IsValid) {
+            db.categoryItems.Remove(category);
+            await db.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        return View(category);
     }
 
     // HTTP GET method for finding out how many items a specific category has
