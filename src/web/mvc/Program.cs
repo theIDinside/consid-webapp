@@ -61,8 +61,12 @@ switch (salaryService) {
 var pageSize = builder.Configuration.GetValue<int>("PageSize");
 pageSize = (pageSize < 0) ? 5 : pageSize;
 var pageSizeService = new PageSizeService(pageSize);
+
 builder.Services.AddSingleton<PageSizeService>(pageSizeService);
+// Register our other services that talks to the backend
 builder.Services.AddTransient<Library>();
+builder.Services.AddTransient<Workforce>();
+
 // build the app, with the configurations and settings we've provided, the services etc
 var app = builder.Build();
 using (var scope = app.Services.CreateScope()) {

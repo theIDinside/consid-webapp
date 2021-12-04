@@ -189,6 +189,7 @@
     }
 
     onDocumentLoaded(async () => {
+        console.log(`DOM contents loaded`);
         for (let e of document.getElementsByClassName("tab-button")) {
            e.addEventListener("click", (evt) => {
                 let id = evt.target.id.replace("Button", "Tab");

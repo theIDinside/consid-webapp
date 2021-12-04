@@ -24,6 +24,14 @@ public abstract class ConsidRepository<T> : IAsyncRepository<T> where T : class 
         return ctx.Set<T>().Where(expression);
     }
 
+    public bool Any(Expression<Func<T, bool>> expression) {
+        return ctx.Set<T>().Any(expression);
+    }
+
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> expression) {
+        return await ctx.Set<T>().AnyAsync(expression);
+    }
+
     public IEnumerable<T> GetAll() {
         return ctx.Set<T>();
     }

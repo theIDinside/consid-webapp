@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Services;
+using webapp.mvc.Repository;
+
 namespace webapp.mvc.Controllers {
     public class EmployeesController : Controller {
 
-        private readonly LibraryContext db;
+        private readonly Workforce db;
         private readonly ILogger<EmployeesController> _logger;
-        public EmployeesController(ILogger<EmployeesController> logger, LibraryContext ctx) {
+        public EmployeesController(ILogger<EmployeesController> logger, Workforce ctx) {
             db = ctx;
             _logger = logger;
         }
@@ -26,7 +28,8 @@ namespace webapp.mvc.Controllers {
                         ModelState.AddModelError("ManagerID", "A CEO can not be managed by someone");
                         return;
                     }
-                    if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
+
+                    if (await db.Employees.GetItemByIDAsync(employee.ID) is Employee man) {
                         if (!employee.IsManager && man.IsCEO) {
                             ModelState.AddModelError("ManagerID", $"Employees can not be managed by a CEO");
                         }
@@ -42,7 +45,7 @@ namespace webapp.mvc.Controllers {
 
         // Makes sure that this employee is not a CEO while there already exists one.
         private void validateUniqueness(Employee employee) {
-            if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID)) {
+            if (employee.IsCEO && !db.CanPromoteToCEO(employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
             }
 
@@ -59,12 +62,11 @@ namespace webapp.mvc.Controllers {
             type = type > EmployeeFilterAll ? EmployeeFilterAll : type;
             ViewBag.GroupBy = type;
 
-            // thank god for pattern matching. C# has finally "arrived."
             var viewModel = type switch {
-                EmployeeFilterNoManagers => await db.employees.Where(e => !e.IsManager).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                EmployeeFilterManagers => await db.employees.Where(e => e.IsManager && !e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                EmployeeFilterCEO => await db.employees.Where(e => e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                _ => await db.employees.GetPagedAsync(page ?? 1, pageSizeService.PageSize) // default case, or EmployeeFilterAll
+                EmployeeFilterNoManagers => await db.Employees.GetEmployees().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterManagers => await db.Employees.GetManagers().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterCEO => await db.Employees.GetCEO().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                _ => await db.Employees.GetAllQueryable().GetPagedAsync(page ?? 1, pageSizeService.PageSize) // default case, or EmployeeFilterAll
             };
             ViewBag.CurrentPage = viewModel.PageIndex;
             return View(viewModel);
@@ -111,8 +113,8 @@ namespace webapp.mvc.Controllers {
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
-                db.employees.Add(employee);
-                await db.SaveChangesAsync();
+                db.Employees.Add(employee);
+                await db.CommitAsync();
                 return RedirectToAction("Index");
             }
             return View(employee);
@@ -123,7 +125,7 @@ namespace webapp.mvc.Controllers {
             if (id == null) {
                 return new BadRequestResult();
             }
-            Employee? employee = await db.employees.FindAsync(id);
+            Employee? employee = await db.Employees.GetItemByIDAsync(id ?? 0);
             if (employee == null) {
                 return new NotFoundResult();
             }
@@ -157,8 +159,8 @@ namespace webapp.mvc.Controllers {
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
-                db.Entry(employee).State = EntityState.Modified;
-                await db.SaveChangesAsync();
+                db.Employees.Update(employee);
+                await db.CommitAsync();
                 return RedirectToAction("Index");
             }
             return View(employee);
@@ -169,7 +171,7 @@ namespace webapp.mvc.Controllers {
             if (id == null) {
                 return new BadRequestResult();
             }
-            Employee? employee = await db.employees.FindAsync(id);
+            Employee? employee = await db.Employees.GetItemByIDAsync(id ?? 0);
             if (employee == null) {
                 return new NotFoundResult();
             }
@@ -180,15 +182,15 @@ namespace webapp.mvc.Controllers {
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id) {
-            if (await db.employees.FindAsync(id) is Employee employee) {
+            if (await db.Employees.GetItemByIDAsync(id) is Employee employee) {
                 if (employee.IsCEO || employee.IsManager) {
-                    if (await db.employees.AnyAsync(e => e.ManagerID == employee.ID)) {
+                    if (await db.Employees.AnyAsync(e => e.ManagerID == employee.ID)) {
                         ModelState.AddModelError("ManagerID", "This person manages other employees and therefore can't be deleted.");
                     }
                 }
                 if (ModelState.IsValid) {
-                    db.employees.Remove(employee);
-                    await db.SaveChangesAsync();
+                    db.Employees.Remove(employee);
+                    await db.CommitAsync();
                     return RedirectToAction("Index");
                 } else {
                     return View(employee);
@@ -204,7 +206,7 @@ namespace webapp.mvc.Controllers {
          */
         [HttpGet]
         public async Task<JsonResult> GetManagers() {
-            var managers = await db.employees.Where(emp => emp.IsManager).ToListAsync();
+            var managers = await db.Employees.GetManagers().ToListAsync();
             return Json(managers.Select(man => {
                 return new { id = man.ID, name = $"{man.FirstName} {man.LastName}" };
             }));
@@ -214,7 +216,7 @@ namespace webapp.mvc.Controllers {
         // This request must not fail, so when an invalid ID is sent (or any other error occurs) this returns an empty JSON object
         [HttpGet]
         public async Task<JsonResult> GetEmployeeInfo(int id) {
-            var e = await db.employees.FirstOrDefaultAsync(e => e.ID == id);
+            var e = await db.Employees.GetItemByIDAsync(id);
             if (e != null) {
                 var employeeType = (e.IsManager, e.IsCEO) switch {
                     (true, true) => "CEO",

@@ -7,6 +7,7 @@ using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
+// Basically the "Unit of work" pattern, but not exactly (but almost)
 public class Library : IDisposable {
     private readonly LibraryContext ctx;
 

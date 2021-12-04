@@ -12,7 +12,7 @@ public class LibraryItemRepository : ConsidRepository<LibraryItem> {
 
     }
 
-    public async Task<PagedViewModel<LibraryItem>> GetPagedOrderBy(int page, int pageSize, string? filter, string? orderBy) {
+    public IQueryable<LibraryItem> QueryOrderBy(string? filter, string? orderBy) {
         var items = from i in ctx.libraryItems select i;
         items = String.IsNullOrEmpty(filter) ? items.Include(e => e.Category) : items.Where(item => item.Title.Contains(filter)).Include(e => e.Category);
         items = (orderBy ?? "") switch {
@@ -24,6 +24,6 @@ public class LibraryItemRepository : ConsidRepository<LibraryItem> {
             "type_desc" => items.OrderByDescending(i => i.Type),
             _ => items
         };
-        return await items.GetPagedAsync(page, pageSize);
+        return items;
     }
 }
