@@ -211,7 +211,6 @@
         console.log(`button: ${btn} / tab ${tab}`);
         openTab(document.getElementById(btn), tab);
         // select the category, which this item belongs to as default selected
-        // await populateCategoriesList("CategoryID");
         setSelection(@Json.Serialize(Model.CategoryID), "CategoryID");
     });
 </script>

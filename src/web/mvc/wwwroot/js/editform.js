@@ -109,25 +109,7 @@ function openTab(tabButton, tab) {
     tabbuttons[i].classList.toggle("active", false);
   }
 
-  // Show the current tab, and add an "active" class to the button that opened the tab
+  // Show the current tab, and add an "active" class to the button that opened the tab, to add a bit of pleasant UI highlighting
   document.getElementById(tab).style.display = "block";
   tabButton.classList.toggle("active", true);
-}
-
-/// Populates <select> DOM element with id `elementId` with list of categories, retrieved from the route /LibraryItem/GetCategories
-/// in an asynchronous javascript call.
-async function populateCategoriesList(elementId = "categoryNameSelect") {
-  let e = document.getElementById(elementId);
-  if (e) {
-    return fetch("/Category/GetCategories")
-      .then((res) => res.json())
-      .then((result) => {
-        for (let cat of result) {
-          let option = new Option(cat.categoryName, cat.categoryId);
-          e.appendChild(option);
-        }
-      });
-  } else {
-    logElementNotFound(populateCategoriesList, elementId);
-  }
 }
