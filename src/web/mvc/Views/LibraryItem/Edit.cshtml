@@ -147,11 +147,6 @@
 </div>
 
 <script type="text/javascript">
-    const doUpdate = () => { updateEditFields(@Json.Serialize(Model.Length)); }
-
-    // I've written my own custom validation here, because I kind of feel the coupling with C# for this stuff
-    // is atrocious. This is battled tested Javascript, easy to write, simple to comprehend.
-
     let borrowerInput = document.getElementById("Borrower2");
     let borrowerValidate = document.getElementById("BorrowerValidate");
 
