@@ -50,12 +50,6 @@ namespace webapp.mvc.Models {
         public virtual Category Category { get; set; }
 
         [NotMapped]
-        public bool IsBorrowed {
-            get {
-                return BorrowDate.HasValue;
-            }
-        }
-        [NotMapped]
         public string displayDate {
             get {
                 return BorrowDate?.ToString("yyyy-MM-dd") ?? "";
