@@ -1,5 +1,7 @@
 using webapp.mvc.DataAccessLayer;
+
 using webapp.mvc.Models;
+using webapp.mvc.Models.ViewModels;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +35,7 @@ public class LibraryItemController : Controller {
             if (this.HttpContext.Session.GetString("Ordering") == null) {
                 this.SessionOrdering = "cat";
             }
-            return this.HttpContext.Session.GetString("Ordering");
+            return this.HttpContext.Session.GetString("Ordering")!;
         }
         set { this.HttpContext.Session.SetString("Ordering", value); }
     }
@@ -58,26 +60,15 @@ public class LibraryItemController : Controller {
         }
 
         items = String.IsNullOrEmpty(searchString) ? items.Include(e => e.Category) : items.Where(item => item.Title.Contains(searchString)).Include(e => e.Category);
-        switch (SessionOrdering) {
-            case "cat":
-                items = items.OrderBy(i => i.Category.CategoryName);
-                break;
-            case "cat_desc":
-                items = items.OrderByDescending(i => i.Category.CategoryName);
-                break;
-            case "title":
-                items = items.OrderBy(i => i.Title);
-                break;
-            case "title_desc":
-                items = items.OrderByDescending(i => i.Title);
-                break;
-            case "type":
-                items = items.OrderBy(i => i.Type);
-                break;
-            case "type_desc":
-                items = items.OrderByDescending(i => i.Type);
-                break;
-        }
+        items = SessionOrdering switch {
+            "cat" => items.OrderBy(i => i.Category.CategoryName),
+            "cat_desc" => items.OrderByDescending(i => i.Category.CategoryName),
+            "title" => items.OrderBy(i => i.Title),
+            "title_desc" => items.OrderByDescending(i => i.Title),
+            "type" => items.OrderBy(i => i.Type),
+            "type_desc" => items.OrderByDescending(i => i.Type),
+            _ => items
+        };
         var viewModel = await items.GetPagedAsync(page ?? 1, pageSizeService.PageSize);
         ViewBag.CurrentPage = viewModel.PageIndex;
         _logger.LogDebug("Items:");
@@ -92,27 +83,31 @@ public class LibraryItemController : Controller {
     }
 
 
-    [HttpPost]
+    [HttpPost, ActionName("CheckOut")]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Checkout(int ID, string Borrower, DateTime? BorrowDate) {
+    public async Task<ActionResult> CheckOut(int ID, string Borrower, DateTime? BorrowDate) {
+        ModelState.Clear();
         if (await db.libraryItems.FindAsync(ID) is LibraryItem libraryItem) {
             if (libraryItem.Type == "reference book") {
-                @ViewBag.EditErrorMessage = "You can't borrow a reference book";
                 ModelState.AddModelError("Type", "You can't borrow a reference book");
             }
-            if (ModelState.IsValid) {
-                if (!String.IsNullOrWhiteSpace(Borrower) && BorrowDate != null) {
-                    libraryItem.Borrower = Borrower;
-                    libraryItem.BorrowDate = BorrowDate;
-                    db.Entry(libraryItem).State = EntityState.Modified;
-                    await db.SaveChangesAsync();
-                    return RedirectToAction("Index");
-                } else {
-                    @ViewBag.EditErrorMessage = "You did not set a borrower and/or date";
-                    return View(libraryItem);
-                }
+            if (String.IsNullOrWhiteSpace(Borrower)) {
+                ModelState.AddModelError("Borrower", "You need to input name of borrower");
             }
-            return View(libraryItem);
+            if (!BorrowDate.HasValue) {
+                ModelState.AddModelError("BorrowDate", "You need to input name of borrower");
+            }
+
+            if (ModelState.IsValid) {
+                libraryItem.Borrower = Borrower;
+                libraryItem.BorrowDate = BorrowDate;
+                db.Entry(libraryItem).State = EntityState.Modified;
+                await db.SaveChangesAsync();
+                return RedirectToAction("Index");
+            }
+            var editModel = await db.EditLibraryModel(ID);
+            editModel!.ViewTab = "CheckOutTab";
+            return View("Edit", editModel);
         } else {
             return new NotFoundResult();
         }
@@ -120,6 +115,7 @@ public class LibraryItemController : Controller {
     }
 
     // Controller action that "returns" a library item
+    [HttpGet, ActionName("CheckIn")]
     public async Task<ActionResult> CheckIn(int? id) {
         if (await db.libraryItems.FindAsync(id) is LibraryItem libraryItem) {
             libraryItem.BorrowDate = null;
@@ -135,18 +131,47 @@ public class LibraryItemController : Controller {
     }
 
     // GET method
-    public ActionResult Create() {
+    [HttpGet]
+    public async Task<ActionResult> Create() {
         // We return an empty view, because, we let our custom UI library handle the populating of fields (like the Categories drop down list).
         // Note to consid: Since I am new to C#, ASP and it's frameworks, I realize that praxis is that one uses the Model-View-ViewModel design
         // but, at some point, I have to hand in this assignment. With the understanding of asp core that I have now, after a week and a half, I would have
         // instead went with that designs. Instead, I handle a lot of this stuff with Javascript calling into controller actions from the client side
-        return View();
+        var createLibItemViewModel = new Models.ViewModels.CreateLibraryItemModel();
+        createLibItemViewModel.Categories = await db.categoryItems.Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
+        if (createLibItemViewModel.Categories.Count() == 0) {
+            ModelState.AddModelError("Category", "There exists no categories. You must first create a category where you can add this item to.");
+        }
+        return View(createLibItemViewModel);
     }
 
     // POST METHOD
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Create([Bind("CategoryID, Category, Title,Author,Pages,RunTimeMinutes,IsBorrowable,Borrower,BorrowDate,Type")] LibraryItem libraryItem) {
+    public async Task<ActionResult> Create([Bind("Title, Author, Length, Type, CategoryID")] Models.ViewModels.CreateLibraryItemModel item) {
+        ModelState.Remove("Categories");
+        var libItem = item.ToLibraryItem();
+        if (libItem == null) {
+            ModelState.AddModelError("Type", "Unknown type was set");
+        }
+
+        if (ModelState.IsValid && libItem != null) {
+            db.libraryItems.Add(libItem);
+            await db.SaveChangesAsync();
+            return RedirectToAction("Index");
+        } else {
+            item.Categories = await db.categoryItems.Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
+            if (item.Categories.Count() == 0) {
+                ModelState.AddModelError("Category", "There exists no categories. You must first create a category where you can add this item to.");
+            }
+        }
+        return View(item);
+    }
+
+    // POST METHOD
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<ActionResult> Create2([Bind("CategoryID, Category, Title,Author,Pages,RunTimeMinutes,IsBorrowable,Borrower,BorrowDate,Type")] LibraryItem libraryItem) {
         if (!libraryItem.BorrowDate.HasValue && libraryItem.Borrower == null) libraryItem.Borrower = ""; // as per requirement doc. for some reason, Borrower should not be nullable
         if (libraryItem.Type == "reference book" && libraryItem.BorrowDate.HasValue) {
             ModelState.AddModelError("Type", "Reference book can not be borrowed. Only books, dvd's and audio books can be borrowerd");
@@ -175,24 +200,78 @@ public class LibraryItemController : Controller {
         return View(libraryItem);
     }
 
-    // GET METHOD
     public async Task<ActionResult> Edit(int? id) {
         if (id == null) {
             return new BadRequestResult();
         }
-        LibraryItem? libraryItem = await db.libraryItems.FindAsync(id);
-        if (libraryItem == null) {
-            return new NotFoundResult();
-        }
-        var categoriesList = await (from c in db.categoryItems select c).Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
-        ViewBag.CategoriesDropdownList = categoriesList;
-        return View(libraryItem);
+        var editModel = await db.EditLibraryModel(id.Value);
+        if (editModel == null) return new NotFoundResult();
+        editModel.ViewTab = "EditDetailsTab";
+        return View(editModel);
     }
 
     // POST METHOD
     [HttpPost, ActionName("Edit")]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> EditConfirmed(int ID, int CategoryID, string Title, string Author, int? Pages, int? RunTimeMinutes, bool IsBorrowable, string Borrower, DateTime? BorrowDate, string Type) {
+    public async Task<ActionResult> EditConfirmed([Bind("ID, Title, Author, Length, Type, CategoryID")] EditLibraryItemModel model) {
+        ModelState.Remove("Categories");
+        var dbItem = await db.libraryItems.FindAsync(model.ID);
+        if (dbItem == null) {
+            ModelState.AddModelError("ID", $"No library item with that ID exists: {model.ID}");
+            return View(model);
+        }
+        var cat = await db.categoryItems.FindAsync(model.CategoryID);
+        if (cat == null) {
+            ModelState.AddModelError("CategoryID", $"No category with id {model.CategoryID} exists");
+        }
+
+        if (model.Type == "reference book" && dbItem.BorrowDate.HasValue) {
+            ModelState.AddModelError("Type", "This book must be checked in first before it can be changed to a reference book");
+        }
+
+        TryValidateModel(model);
+        ModelState.Remove("Categories");
+        dbItem.Title = model.Title;
+        dbItem.Author = model.Author;
+        dbItem.Type = model.Type;
+        dbItem.CategoryID = model.CategoryID;
+        switch (model.Type) {
+            case "reference book":
+                dbItem.Pages = model.Length;
+                dbItem.RunTimeMinutes = null;
+                dbItem.IsBorrowable = false;
+                break;
+            case "book":
+                dbItem.Pages = model.Length;
+                dbItem.RunTimeMinutes = null;
+                dbItem.IsBorrowable = true;
+                break;
+            case "audio book":
+            case "dvd":
+                dbItem.Pages = null;
+                dbItem.RunTimeMinutes = model.Length;
+                dbItem.IsBorrowable = true;
+                break;
+            default:
+                ModelState.AddModelError("Type", $"Type {model.Type} does not exist");
+                break;
+        }
+        if (ModelState.IsValid) {
+            db.Entry(dbItem).State = EntityState.Modified;
+            await db.SaveChangesAsync();
+            return RedirectToAction("Index");
+        } else {
+            var categoriesList = await (from c in db.categoryItems select c).Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
+            model.Categories = categoriesList;
+            model.ViewTab = "EditDetailsTab";
+            return View(model);
+        }
+    }
+
+    // POST METHOD
+    [HttpPost, ActionName("FooEdit")]
+    [ValidateAntiForgeryToken]
+    public async Task<ActionResult> FooEditConfirmed(int ID, int CategoryID, string Title, string Author, int? Pages, int? RunTimeMinutes, bool IsBorrowable, string Borrower, DateTime? BorrowDate, string Type) {
         // NOTE(simon): Bug in ModelState validation? I've set this to "AllowEmptyStrings", I've tried setting it to "minimum length = 1" as well to no avail. All that's left
         // is clearing it manually. Yay OOP.
         ModelState.ClearValidationState("Borrower");

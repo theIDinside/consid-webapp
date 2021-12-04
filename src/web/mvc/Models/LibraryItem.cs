@@ -48,24 +48,6 @@ namespace webapp.mvc.Models {
         [StringLength(20)]
         public string Type { get; set; }
 
-        [NotMapped]
-        [Display(Name = "Library Item")]
-        public string Listing {
-            get {
-                // This method gets called when we want to display this library item's name, concatenated with the abbreviation
-                var abbreviation = string.Join("",
-                        this.Title.Split(' ')
-                        .Where(substr => substr.Length > 0 && char.IsLetterOrDigit(substr[0]))
-                        .Select(substr => char.ToUpper(substr[0]))
-                        .ToArray()
-                    );
-                return $"{Title} ({abbreviation})";
-            }
-        }
-        // What the "entity framework" calls a navigational property. It's essentially what CategoryID maps against, being a foreign key and all.
-        // We use this navigation property, to display the name of the category this Library item is assigned to.
-        // Caveat here; being this is day 2 of me using C# and ASP.NET, I'm not entirely sure this is idiomatic C#/EF, but it works.
-
         public virtual Category Category { get; set; }
 
         [NotMapped]
@@ -89,5 +71,19 @@ namespace webapp.mvc.Models {
                 else return 0;
             }
         }
+    }
+
+    public static class DisplayListingExtension {
+        public static string ListDisplay(this string Title) {
+            // This method gets called when we want to display this library item's name, concatenated with the abbreviation
+            var abbreviation = string.Join("",
+                    Title.Split(' ')
+                    .Where(substr => substr.Length > 0 && char.IsLetterOrDigit(substr[0]))
+                    .Select(substr => char.ToUpper(substr[0]))
+                    .ToArray()
+                );
+            return $"{Title} ({abbreviation})";
+        }
+
     }
 }

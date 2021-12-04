@@ -17,12 +17,12 @@
     This application was made by letting Visual Studio create a new ASP.NET Web Application (.NET Framework 4.7.2).<br />
     Technologies used:
     <ul>
-        <li>ASP.NET MVC (.NET Framework 4.7.2)</li>
-        <li>C#</li>
+        <li>ASP.NET Core 6.0</li>
+        <li>C# (using features for version >= 8.0)</li>
         <li><a href="https://docs.microsoft.com/en-us/ef/" target="_blank">Entity Framework</a> - used for binding the data in the backend with a model to be represented in the MVC UI, also provides a nicer programmable interface to the SQL server.</li>
         <li>Vanilla Javascript for simple UI related things, such as styling "tabbed" content, client side validation of forms</li>
         <li>Bootstrap CSS</li>
-        <li>LocalDB SQL Server, hosted by Visual Studio's development environment</li>
+        <li>MSSQL Server, connecting to localhost with the user considsimon & password Consid2021</li>
     </ul>
 
     In the process of creating this project, I've spent about 20 hours spread out over a full work week, with possibly some more time, involving researching background material necessary to complete this task.
@@ -30,15 +30,20 @@
 
 <div class="row">
     <div class="col-md-4">
-        <h2>View all library Items</h2>
+        <h2>Library Items</h2>
         <p>
             Shows a list of library items existing in the database.
         </p>
-        <p><a class="btn btn-default" href='@Url.Action("Index", "LibraryItem")'>View & edit library items</a></p>
+        <p><a class="btn btn-primary" href='@Url.Action("Index", "LibraryItem")'>View & edit library items</a></p>
     </div>
     <div class="col-md-4">
-        <h2>View categories</h2>
-        Shows the list of categories and provides a rudimentary interface for editing these.
-        <p><a class="btn btn-default" href="@Url.Action("Index", "Category")">View & edit categories</a></p>
+        <h2>Categories</h2>
+        <p>Shows the list of categories and provides a rudimentary interface for editing these.</p>
+        <p><a class="btn btn-primary" href="@Url.Action("Index", "Category")">View & edit categories</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Employees</h2>
+        <p>Manage, edit and view employee records.</p>
+        <p><a class="btn btn-primary" href="@Url.Action("Index", "Employees")">View & edit employees</a></p>
     </div>
 </div>

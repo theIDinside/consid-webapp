@@ -40,3 +40,19 @@ function setSelection(value, dropDownListElementId) {
     logElementNotFound(setSelection, dropDownListElementId);
   }
 }
+
+// Function that makes sure all inputs are trimmed. We don't want to store "    some item name ", instead we want to store "some item name"
+function formInputTrimmer() {
+  let forms = document.getElementsByTagName("form");
+  for (let f of forms) {
+    f.addEventListener("submit", (evt) => {
+      let f = document.getElementById(evt.target.id);
+      for (let el of f.elements) {
+        if (el.type === "text") {
+          console.log(`element is a text type.. trimming`);
+          el.value = el.value.trim();
+        }
+      }
+    });
+  }
+}

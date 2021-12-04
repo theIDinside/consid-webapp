@@ -82,10 +82,8 @@
         function setEmployeeTypeSelection() {
             let e = document.getElementById("EmployeeType");
             let isCEO = @Json.Serialize(Model.IsCEO);
-            let isManager = @Json.Serialize(Model.IsCEO);
-            console.log(`Model is ceo: ${isCEO} is man: ${isManager}`);
+            let isManager = @Json.Serialize(Model.IsManager);
             // this is stupid. Stupid C#. Stupid. Stupid. Stupid.
-            console.log(`Value of model: @(Model.IsCEO)`);
             if (isCEO) {
                 e.value = "CEO";
             } else if (isManager) {

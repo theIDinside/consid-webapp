@@ -1,85 +1,26 @@
-﻿@model webapp.mvc.Models.LibraryItem
+﻿@model webapp.mvc.Models.ViewModels.CreateLibraryItemModel
 @{
     ViewBag.Title = "Create Library item";
 }
-<script src="/js/editform.js"></script>
-<script src="~/js/validation.js"></script>
 
 <script type="text/javascript">
-    // This is the different states the form can be in.
-    // based on the value passed into setLibraryItemFormType(state), we hide input fields, and set them to null (disable) or we show them (enable).
-    // The show/hide data members, determine the UI visibility, while the enable/disable determine visibility for input field & the contents inside it, which later gets POSTed to route
-    const FORM_LIBRARY_ITEM_TYPE = {
-        PLAYABLE: { enable: ["RunTimeMinutes", "Borrower", "BorrowDate"], disable: ["Pages"], borrowable: true, show: ["runTimeMinutesInput", "borrowFields"], hide: ["pagesInput"] },
-        BOOK: { enable: ["Pages", "Borrower", "BorrowDate"], disable: ["RunTimeMinutes"], borrowable: true, show: ["pagesInput", "borrowFields"], hide: ["runTimeMinutesInput"] },
-        BOOK_NON_BORROW: { enable: ["Pages"], disable: ["RunTimeMinutes", "Borrower", "BorrowDate"], borrowable: false, show: ["pagesInput"], hide: ["runTimeMinutesInput", "borrowFields"] }
+function doUpdate() {
+    let lengthLabel = document.getElementById("lengthLabel");
+    let typeSelect = document.getElementById("Type");
+    switch(typeSelect.value) {
+        case "book":
+        case "reference book":
+            lengthLabel.innerText = "Pages";
+        break;
+        case "audio book":
+        case "dvd":
+            lengthLabel.innerText = "Run time (minutes)";
+        break;
+        default:
+            lengthLabel.innerText = "Length";
     }
+}
 
-    /**
-     * Sets input form so that it only accepts values in field related to the type and it's properties defined
-     * in the technical specification (tekniksuppgift.pdf)
-     * @@param { { enable: string[], disable: string[] } } state - state of form, defined by "enum" FORM_LIBRARY_TYPE
-     */
-    const setInputFormType = (state) => {
-        enableElements(state.enable);
-        disableElements(state.disable);
-    }
-
-    /**
-     * Sets input form so that it only accepts values in field related to the type and it's properties defined
-     * in the technical specification (tekniksuppgift.pdf)
-     * @@param { { enable: string[], disable: string[], borrowable: boolean, show: string[], hide: string[] } } state - state of form, defined by "enum" FORM_LIBRARY_TYPE
-     */
-    const setLibraryItemFormType = (state) => {
-        enableElements(state.enable);
-        disableElements(state.disable);
-        document.getElementById("IsBorrowable").value = state.borrowable;
-        for (const hide of state.hide) {
-            document.getElementById(hide).hidden = true;
-        }
-        for (const show of state.show) {
-            document.getElementById(show).hidden = false;
-        }
-    }
-
-    let borrowDate = document.getElementById("BorrowDate");
-    let borrower = document.getElementById("Borrower");
-
-    function updateCreateFields() {
-        const selectedTypeValue = document.getElementById("Type").value
-        switch (selectedTypeValue) {
-            case "reference book":
-                setLibraryItemFormType(FORM_LIBRARY_ITEM_TYPE.BOOK_NON_BORROW);
-                break;
-            case "book":
-                setLibraryItemFormType(FORM_LIBRARY_ITEM_TYPE.BOOK);
-                break;
-            case "dvd":
-            case "audio book":
-                setLibraryItemFormType(FORM_LIBRARY_ITEM_TYPE.PLAYABLE);
-                break;
-            default:
-                alert(`You've tried altering some hidden state. This technical assessment did not involve security related issues: ${selectedTypeValue}`);
-        }
-    }
-
-    // Set up the validator logic & populating of categories etc
-    onDocumentLoaded(() => {
-        // set input field state on page load
-        updateCreateFields();
-        populateCategoriesList("CategoryID");
-        let form = document.getElementById("CreateLibraryItemForm");
-        if (form) {
-            form.addEventListener("submit", (evt) => {
-                if (borrowDate.value != null || borrowDate.value.length > 0 || borrower.value.length > 0) {
-                    validateInputOnSubmit(borrower, "The name of the borrower must be input", evt, (e) => e.value.length > 0 && e.value != null)
-                    validateInputOnSubmit(borrowDate, "Input must be a valid date", evt, dateValidator);
-                }
-            })
-        } else {
-            alert("You've hacked the site to not have the form. Security features not implemented on the UI side.");
-        }
-    });
 </script>
 
 <h2>Create</h2>
@@ -91,27 +32,7 @@
         <h4>Item properties</h4>
         <hr />
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        <div class="form-group">
-            <label for="CategoryID" class="control-label col-md-2">Category</label>
-            <div class="col-md-10">
-                <select id="CategoryID" name="CategoryID" class="form-select"></select>
-            </div>
-        </div>
-        <div class="form-group">
-            @Html.LabelFor(model => model.Type, htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownListFor(model => model.Type,
-            new List<SelectListItem> {
-            new SelectListItem { Value = "book", Text="Book" },
-            new SelectListItem { Value = "reference book", Text = "Reference book" },
-            new SelectListItem { Value = "dvd", Text = "DVD" },
-            new SelectListItem { Value = "audio book", Text = "Audio Book" }
-            }, new { @class = "form-select", @onchange = "updateCreateFields()" }
-            )
 
-                @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
-            </div>
-        </div>
         <div class="form-group">
             @Html.LabelFor(model => model.Title, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
@@ -128,42 +49,38 @@
             </div>
         </div>
 
-        <div class="form-group" id="pagesInput">
-            @Html.LabelFor(model => model.Pages, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.Type, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.EditorFor(model => model.Pages, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Pages, "", new { @class = "text-danger" })
+            @Html.DropDownListFor(model => model.Type, new List<SelectListItem> {
+                            new SelectListItem { Value = "book", Text="Book" },
+                            new SelectListItem { Value = "reference book", Text = "Reference book" },
+                            new SelectListItem { Value = "dvd", Text = "DVD" },
+                            new SelectListItem { Value = "audio book", Text = "Audio Book" }
+                 }, new { @class = "form-select", @onchange = "doUpdate()" })
+                @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
             </div>
         </div>
-        <div class="form-group" id="runTimeMinutesInput">
-            @Html.LabelFor(model => model.RunTimeMinutes, htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.EditorFor(model => model.RunTimeMinutes, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.RunTimeMinutes, "", new { @class = "text-danger" })
-            </div>
-        </div>
-        <div id="borrowFields">
-            @Html.HiddenFor(model => model.IsBorrowable)
-            <div class="form-group">
-                @Html.LabelFor(model => model.Borrower, htmlAttributes: new { @class = "control-label col-md-2" })
-                <div class="col-md-10">
-                    @Html.EditorFor(model => model.Borrower, new { htmlAttributes = new { @class = "form-control" } })
-                    @Html.ValidationMessageFor(model => model.Borrower, "", new { @class = "text-danger" })
-                </div>
-            </div>
 
-            <div class="form-group">
-                @Html.LabelFor(model => model.BorrowDate, htmlAttributes: new { @class = "control-label col-md-2" })
-                <div class="col-md-10">
-                    @Html.EditorFor(model => model.BorrowDate, new { htmlAttributes = new { @class = "form-control" } })
-                    @Html.ValidationMessageFor(model => model.BorrowDate, "", new { @class = "text-danger" })
-                </div>
+        <div class="form-group">
+            <label for="Length" id="lengthLabel">Pages</label>
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Length, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Length, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="Category" class="control-label col-md-2">Select category</label>
+            <div class="col-md-10">
+                @Html.DropDownListFor(m => m.CategoryID, @Model.Categories, new { @class = "form-select" })
+                @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger" })
             </div>
         </div>
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Create" class="btn btn-default" />
+                <input type="submit" value="Create" class="btn btn-primary" />
             </div>
         </div>
         <div class="text-danger">
@@ -175,3 +92,7 @@
 <div>
     @Html.ActionLink("Back to List", "Index")
 </div>
+
+<script>
+    onDocumentLoaded(formInputTrimmer);
+</script>

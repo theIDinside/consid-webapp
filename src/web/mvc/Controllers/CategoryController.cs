@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using webapp.mvc.Services;
 
 namespace webapp.mvc.Controllers;
 
@@ -23,9 +24,18 @@ public class CategoryController : Controller {
     }
 
     // GET: Li
-    public async Task<ActionResult> Index() {
+    public async Task<ActionResult> Index(string searchString, int? page, [FromServices] PageSizeService pageSizeService) {
+        ViewBag.CurrentPage = page ?? 1;
+        if (searchString != null) {
+            ViewBag.CurrentPage = 1;
+            ViewBag.Filter = searchString;
+        } else {
+            searchString = ViewBag.Filter;
+        }
+        var items = from i in db.categoryItems select i;
+        items = String.IsNullOrWhiteSpace(searchString) ? items : items.Where(item => item.CategoryName.Contains(searchString));
 
-        return View(await db.categoryItems.ToListAsync());
+        return View(await items.GetPagedAsync(page ?? 1, pageSizeService.PageSize));
     }
 
     // GET: Returns the view containing the form for creating a Category
@@ -98,8 +108,11 @@ public class CategoryController : Controller {
         if (hasEntitiesWithFKCategoryId) {
             ModelState.AddModelError("CategoryName", "This category has items in it. You need to either delete those library items or move them to another category.");
         }
+        if (category == null) {
+            ModelState.AddModelError("ID", "This category doesn't exist anymore");
+        }
         if (ModelState.IsValid) {
-            db.categoryItems.Remove(category);
+            db.categoryItems.Remove(category!);
             await db.SaveChangesAsync();
             return RedirectToAction("Index");
         }

@@ -39,7 +39,7 @@
 
 <script>
     onDocumentLoaded(() => {
-        let categoryId = @Json.Serialize(Model.ID);
+        let categoryId = @Json.Serialize(Model!.ID);
         getCategoryItemCount(categoryId).then(res => {
             document.getElementById("itemCount").innerHTML = `(${res.count != undefined ? res.count : 0} items)`
         })
