@@ -32,7 +32,6 @@ namespace webapp.mvc.Models {
         [Column("IsBorrowable")]
         public bool IsBorrowable { get; set; }
 
-
         [Column("Borrower")]
         [Required(AllowEmptyStrings = true)]
         [DisplayFormat(ConvertEmptyStringToNull = false)]
@@ -60,15 +59,6 @@ namespace webapp.mvc.Models {
         public string displayDate {
             get {
                 return BorrowDate?.ToString("yyyy-MM-dd") ?? "";
-            }
-        }
-
-        [NotMapped]
-        public int LengthValue {
-            get {
-                if (Pages.HasValue) return Pages.Value;
-                else if (RunTimeMinutes.HasValue) return RunTimeMinutes.Value;
-                else return 0;
             }
         }
     }
