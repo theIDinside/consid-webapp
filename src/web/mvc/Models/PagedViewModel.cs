@@ -35,7 +35,7 @@ public class PagedViewModel<T> : BasePagedViewModel where T : class {
     }
 }
 
-// Extension function implementations. So that we can say db.libraryItems.GetPagedAsync(somePageNum, itemsPerPage)
+// Extension function implementations. So that we can say someIQueryableItems.GetPagedAsync(somePageNum, itemsPerPage) and turn it into the kind of data we want to display on the view
 public static class PagedQueryExtension {
     public async static Task<PagedViewModel<T>> GetPagedAsync<T>(this IQueryable<T> query, int page, int pageSize) where T : class {
         var totalRowCount = 0;

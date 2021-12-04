@@ -4,6 +4,7 @@ using webapp.mvc.DataAccessLayer;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using webapp.mvc.Loggers;
 using webapp.mvc.Services;
+using webapp.mvc.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -61,6 +62,7 @@ var pageSize = builder.Configuration.GetValue<int>("PageSize");
 pageSize = (pageSize < 0) ? 5 : pageSize;
 var pageSizeService = new PageSizeService(pageSize);
 builder.Services.AddSingleton<PageSizeService>(pageSizeService);
+builder.Services.AddTransient<Library>();
 // build the app, with the configurations and settings we've provided, the services etc
 var app = builder.Build();
 using (var scope = app.Services.CreateScope()) {

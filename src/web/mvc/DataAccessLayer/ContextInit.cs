@@ -44,8 +44,6 @@ namespace webapp.mvc.DataAccessLayer {
                     new LibraryItem { CategoryID = catProgrammingID, Title = "Foo bar", Author = "Baz", Pages = 1337, IsBorrowable = false, Borrower = "", Type = "reference book" }
                 );
                 ctx.SaveChanges();
-
-                ctx.SaveChanges();
             }
         }
     }
