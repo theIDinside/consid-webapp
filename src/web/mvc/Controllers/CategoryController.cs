@@ -104,7 +104,7 @@ public class CategoryController : Controller {
         var category = await db.Categories.GetItemByIDAsync(id);
         var hasEntitiesWithFKCategoryId = await db.LibraryItems.AnyAsync(libitem => libitem.CategoryID == id);
         if (hasEntitiesWithFKCategoryId) {
-            ModelState.AddModelError("CategoryName", "This category has items in it. You need to either delete those library items or move them to another category.");
+            ModelState.AddModelError("ID", "This category has items in it. You need to either delete those library items or move them to another category.");
         }
         if (category == null) {
             ModelState.AddModelError("ID", "This category doesn't exist anymore");
