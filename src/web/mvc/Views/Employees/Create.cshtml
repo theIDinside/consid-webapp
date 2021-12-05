@@ -50,6 +50,7 @@
                     <option value="10">10</option>
                 </select>
             </div>
+            @Html.ValidationMessage("SalaryInput", "", new { @class = "text-danger " })
         </div>
         <div class="form-group">
             <label for="EmployeeType" class="control-label col-md-2">Employee type</label>

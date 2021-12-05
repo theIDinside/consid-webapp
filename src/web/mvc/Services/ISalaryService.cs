@@ -13,7 +13,11 @@ namespace webapp.mvc.Services {
 
     // Rank Salary calculation service
     public interface ISalaryService {
-        Decimal CalculateSalary(EmployeeType employeeType, int SalaryInput);
+        /**
+         * <summary> Tries to calculate salary based on the SalaryInput rank and stores the result in <paramref name="result">result</paramref></summary>
+         * <returns>true if the calculation succeeds or false otherwise. Result is stored in the out parameter<paramref name="result">result</paramref></returns>
+         */
+        bool TryCalculateSalary(EmployeeType employeeType, int SalaryInputRank, out decimal result);
     }
 }
 #pragma warning restore

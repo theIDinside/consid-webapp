@@ -115,7 +115,11 @@ namespace webapp.mvc.Controllers {
                 ViewBag.ErrorMessage = $"Employee type {EmployeeType} not recognized";
                 return View(employee);
             }
-            employee.Salary = salaryService.CalculateSalary(employeeType, SalaryInput);
+            Decimal Salary = 0;
+            if (!salaryService.TryCalculateSalary(employeeType, SalaryInput, out Salary)) {
+                ModelState.AddModelError("SalaryInput", $"Input rank must be between 1 and 10. Input: [{SalaryInput}]");
+            }
+            employee.Salary = Salary;
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
