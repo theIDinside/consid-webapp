@@ -36,4 +36,14 @@ public class Workforce : IDisposable {
     public bool CanPromoteToCEO(int id) {
         return Employees.Find(e => e.IsCEO && e.ID != id).Count() == 0;
     }
+
+    public List<Employee>? GetPossibleManagers(EmployeePosition position) {
+        switch (position) {
+            case EmployeePosition.Employee:
+                return Employees.GetManagers().ToList();
+            case EmployeePosition.Manager:
+                return Employees.GetManagers().Concat(Employees.GetCEO()).ToList();
+        }
+        return null;
+    }
 }
