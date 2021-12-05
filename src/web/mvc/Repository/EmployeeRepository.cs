@@ -8,12 +8,6 @@ using webapp.mvc.Models.ViewModels;
 namespace webapp.mvc.Repository;
 
 public class EmployeeRepository : ConsidRepository<Employee> {
-
-    public const int EmployeeFilterNoManagers = 1;
-    public const int EmployeeFilterManagers = 2;
-    public const int EmployeeFilterCEO = 3;
-    public const int EmployeeFilterAll = 4;
-
     public EmployeeRepository(LibraryContext contextReference) : base(contextReference) {
 
     }
