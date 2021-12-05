@@ -46,8 +46,7 @@ function formInputTrimmer() {
   let forms = document.getElementsByTagName("form");
   for (let f of forms) {
     f.addEventListener("submit", (evt) => {
-      let f = document.getElementById(evt.target.id);
-      for (let el of f.elements) {
+      for (let el of evt.target.elements) {
         if (el.type === "text") {
           console.log(`element is a text type.. trimming`);
           el.value = el.value.trim();
