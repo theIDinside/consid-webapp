@@ -19,7 +19,7 @@ public class CreateLibraryItemModel {
 
     public List<SelectListItem> Categories { get; set; }
 
-    public virtual LibraryItem? ToLibraryItem() {
+    public LibraryItem? ToLibraryItem() {
         return Type switch {
             "book" => new LibraryItem { Title = Title, Author = Author, Type = Type, CategoryID = CategoryID, Pages = Length, Borrower = "", IsBorrowable = true },
             "reference book" => new LibraryItem { Title = Title, Author = Author, Type = Type, CategoryID = CategoryID, Pages = Length, Borrower = "", IsBorrowable = false },
