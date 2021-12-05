@@ -42,6 +42,10 @@ namespace webapp.mvc.Controllers {
                     } else {
                         ModelState.AddModelError("ManagerID", $"No manager found with id {employee.ManagerID}");
                     }
+                } else {
+                    if (!employee.IsManager) {
+                        ModelState.AddModelError("ManagerID", "This employee must be managed by a manager!");
+                    }
                 }
             }).Wait();
         }
@@ -51,12 +55,11 @@ namespace webapp.mvc.Controllers {
             if (employee.IsCEO && !db.CanPromoteToCEO(employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
             }
-
         }
 
         private const int EmployeeFilterNoManagers = 1;
-        private const int EmployeeFilterManagers = 2;
         private const int EmployeeFilterCEO = 3;
+        private const int EmployeeFilterManagers = 2;
         private const int EmployeeFilterAll = 4;
         // GET: Employees
         public async Task<ActionResult> Index(int? page, int? employeeFilter, [FromServices] PageSizeService pageSizeService) {
