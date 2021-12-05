@@ -38,15 +38,17 @@ namespace webapp.mvc.Models {
         [StringLength(100)]
         public string Borrower { get; set; }
 
-        [Column("BorrowDate")]
+        // we have to add the 'TypeName = "Date"', because otherwise, Entity Framework will create a DATETIME type, which is not what we want.
+
         [Display(Name = "Borrow date")]
         [DataType(DataType.Date)]
+        [Column("BorrowDate", TypeName = "Date")]
         public DateTime? BorrowDate { get; set; }
 
         [Required]
-        [StringLength(20)]
+        [StringLength(50)]
         public string Type { get; set; }
-
+        // What E.F. calls a navigation property; essentially what the foreign key points to. We can say .Include(i => i.Category), and E.F. will hook it up for us, behind the scenes.
         public virtual Category Category { get; set; }
 
         [NotMapped]
