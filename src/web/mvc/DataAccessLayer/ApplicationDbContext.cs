@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using webapp.mvc.Models;
 using webapp.mvc.Models.ViewModels;
+#pragma warning disable
 namespace webapp.mvc.DataAccessLayer {
     public class ApplicationDbContext : DbContext {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
@@ -34,3 +35,4 @@ namespace webapp.mvc.DataAccessLayer {
         }
     }
 }
+#pragma warning restore

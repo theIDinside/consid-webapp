@@ -2,6 +2,7 @@
 @model webapp.mvc.Models.PagedViewModel<Employee>
 
 @{
+
     ViewBag.Title = "Index";
 }
 <!-- For using some of our nice features -->
@@ -11,16 +12,18 @@
     <div>
         @Html.ActionLink("Create New", "Create", "Employees", new {}, new { @class ="btn btn-primary"})
     </div>
-        @using (Html.BeginForm("Index", "Employees", FormMethod.Post, new { @class = "search-filter-controls" })) {
-        <input type="hidden" value="@Model.PageIndex" name="page">
+    @using (Html.BeginForm("Index", "Employees", FormMethod.Post, new { @class = "search-filter-controls" }))
+    {
+        <input type="hidden" value="@Model!.PageIndex" name="page">
         <label for="employeeFilter">View</label>
-        <select id="employeeFilter", name="employeeFilter" class="form-select">
+        <select id="employeeFilter" , name="employeeFilter" class="form-select">
             <option value="1">Employees</option>
             <option value="2">Managers</option>
             <option value="3">CEO</option>
             <option value="4">All employees</option>
         </select>
         <input type="submit" value="Filter" class="btn btn-primary" />
+
     }
 </div>
 <div>
@@ -45,6 +48,7 @@
         </tr>
 
         @foreach (var item in Model.Page)
+
         {
             <tr class="library-items-table-item" onclick='route(`Employees/Edit/${@Json.Serialize(item.ID)}`)'>
                 <td>
@@ -60,24 +64,29 @@
                     @if (item.IsCEO)
                     {
                         <div>CEO</div>
+
                     }
                     else if (item.IsManager)
                     {
                         <div>Manager</div>
+
                     }
                     else
                     {
                         <div>Employee</div>
+
                     }
                 </td>
                 <td class="managerIdContainer">
                     @if (item.ManagerID == null)
                     {
                         <div>-1</div>
+
                     }
                     else
                     {
                         <div>@item.ManagerID</div>
+
                     }
                 </td>
                 <td>
@@ -85,34 +94,68 @@
                     @Html.ActionLink("Delete", "Delete", new { id=item.ID })
                 </td>
             </tr>
+
         }
 
     </table>
 </div>
 <div class="controls-bottom">
-@if(@Model.TotalPages <= 5) {
-    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">&larr;</a>
-    for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber) {
-        if(pageNumber == @ViewBag.CurrentPage) {
-            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary webapp-active page-btn">@pageNumber</a>
-        } else {
-            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">@pageNumber</a>
+    @if (@Model.TotalPages <= 5)
+    {
+        <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">&larr;</a>
+
+        for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber)
+        {
+
+            if (pageNumber == @ViewBag.CurrentPage)
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary webapp-active page-btn">@pageNumber</a>
+
+            }
+            else
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">@pageNumber</a>
+
+            }
+
         }
+        <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">&rarr;</a>
+
     }
-    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">&rarr;</a>
-} else {
-    var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
-    var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
-    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">&larr;</a>
-    for(var pageNumber = start; pageNumber <= end; pageNumber++) {
-        if(pageNumber == @ViewBag.CurrentPage) {
-            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary webapp-active page-btn">@pageNumber</a>
-        } else {
-            <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">@pageNumber</a>
+    else
+    {
+
+        var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
+
+        var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
+        <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -1, 1), employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">&larr;</a>
+
+        for (var pageNumber = start; pageNumber <= end; pageNumber++)
+        {
+
+            if (pageNumber == @ViewBag.CurrentPage)
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary webapp-active page-btn">@pageNumber</a>
+
+            }
+            else
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">@pageNumber</a>
+
+            }
+
         }
+        <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })"
+        class="btn btn-primary page-btn">&rarr;</a>
+
     }
-    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 1, Math.Max(Model.TotalPages, 1)), employeeFilter = @ViewBag.GroupBy })" class="btn btn-primary page-btn">&rarr;</a>
-}
 </div>
 <script>
     onDocumentLoaded(() => {

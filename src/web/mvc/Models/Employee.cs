@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace webapp.mvc.Models {
+#pragma warning disable
     public enum EmployeePosition {
         Employee = 1,
         Manager = 2,
@@ -31,3 +32,4 @@ namespace webapp.mvc.Models {
         public int? ManagerID { get; set; }
     }
 }
+#pragma warning restore

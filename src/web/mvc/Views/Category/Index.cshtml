@@ -2,6 +2,7 @@
 @model webapp.mvc.Models.PagedViewModel<webapp.mvc.Models.Category>
 
 @{
+
     ViewBag.Title = "Index";
 }
 
@@ -11,6 +12,7 @@
         @Html.ActionLink("Create New", "Create", "Category", new {}, new { @class ="btn btn-primary"})
     </div>
     @using (Html.BeginForm("Index", "Category", FormMethod.Post, new { @class = "search-filter-controls" }))
+
     {
         <div>
             <label for="searchString" class="control-label">Title filter</label>
@@ -19,6 +21,7 @@
             @Html.TextBox("searchString", null, new { @value = @ViewBag.Filter, @placeholder = "Filter items by..."})
         </div>
         <input type="submit" value="Filter" class="btn btn-primary" />
+
     }
 </div>
 <table class="table library-items-table">
@@ -31,7 +34,8 @@
         </th>
     </tr>
 
-    @foreach (var item in Model.Page)
+    @foreach (var item in Model!.Page)
+
     {
         <tr class="library-items-table-item" onclick='route(`Category/Edit/${@Json.Serialize(item.ID)}`)'>
             <td>
@@ -42,31 +46,64 @@
                 @Html.ActionLink("Delete", "Delete", new { id=item.ID })
             </td>
         </tr>
+
     }
 
 </table>
 <div class="controls-bottom">
-@if(Model.TotalPages <= 5) {
-    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter })" class="btn btn-primary page-btn">&larr;</a>
-    @for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber) {
-        if(pageNumber == @ViewBag.CurrentPage) {
-            <a href="@Url.Action("Index", new { page = pageNumber , searchString = @ViewBag.Filter })" class="btn btn-primary webapp-active page-btn">@pageNumber</a>
-        } else {
-            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary page-btn">@pageNumber</a>
+    @if (Model.TotalPages <= 5)
+    {
+        <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter })"
+        class="btn btn-primary page-btn">&larr;</a>
+        @for (var pageNumber = 1; pageNumber <= Model.TotalPages; ++pageNumber)
+        {
+
+            if (pageNumber == @ViewBag.CurrentPage)
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber , searchString = @ViewBag.Filter })"
+        class="btn btn-primary webapp-active page-btn">@pageNumber</a>
+
+            }
+            else
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })"
+        class="btn btn-primary page-btn">@pageNumber</a>
+
+            }
+
         }
+        <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })"
+        class="btn btn-primary page-btn">&rarr;</a>
+
     }
-    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })" class="btn btn-primary page-btn">&rarr;</a>
-} else {
-    var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
-    var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
-    <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter  })" class="btn btn-primary page-btn">&larr;</a>
-    for(var pageNumber = start; pageNumber <= end; pageNumber++) {
-        if(pageNumber == @ViewBag.CurrentPage) {
-            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary webapp-active page-btn">@pageNumber</a>
-        } else {
-            <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })" class="btn btn-primary page-btn">@pageNumber</a>
+    else
+    {
+
+        var start = Math.Max(@ViewBag.CurrentPage - 3, 1);
+
+        var end = Math.Min(@ViewBag.CurrentPage + 6, Model.TotalPages);
+        <a href="@Url.Action("Index", new { page = Math.Max(@ViewBag.CurrentPage -5, 1), searchString = @ViewBag.Filter  })"
+        class="btn btn-primary page-btn">&larr;</a>
+
+        for (var pageNumber = start; pageNumber <= end; pageNumber++)
+        {
+
+            if (pageNumber == @ViewBag.CurrentPage)
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })"
+        class="btn btn-primary webapp-active page-btn">@pageNumber</a>
+
+            }
+            else
+            {
+                <a href="@Url.Action("Index", new { page = pageNumber, searchString = @ViewBag.Filter  })"
+        class="btn btn-primary page-btn">@pageNumber</a>
+
+            }
+
         }
+        <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })"
+        class="btn btn-primary page-btn">&rarr;</a>
+
     }
-    <a href="@Url.Action("Index", new { page = Math.Min(@ViewBag.CurrentPage + 5, Math.Max(Model.TotalPages, 1)), searchString = @ViewBag.Filter  })" class="btn btn-primary page-btn">&rarr;</a>
-}
 </div>

@@ -2,7 +2,7 @@
 @model webapp.mvc.Models.ViewModels.EditLibraryItemModel;
 
 @{
-    ViewBag.Title = $"Edit {Model.Title}";
+    ViewBag.Title = $"Edit {Model!.Title}";
 }
 <script src="~/js/editform.js"></script>
 <script src="~/js/validation.js"></script>

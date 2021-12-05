@@ -116,7 +116,7 @@ namespace webapp.mvc.Controllers {
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
-                db.Employees.AddAsync(employee);
+                await db.Employees.AddAsync(employee);
                 await db.CommitAsync();
                 return RedirectToAction("Index");
             }
@@ -144,12 +144,14 @@ namespace webapp.mvc.Controllers {
             employee.ManagerID = (employee.ManagerID == -1) ? null : employee.ManagerID;
             if (await db.Employees.GetItemByIDAsync(employee.ID) is Employee employeeRecord) {
                 if (Enum.TryParse(EmployeeType, out employeeType)) {
-                    // we can ignore the "non exhaustive pattern" warning here, because, we're actually using TryParse
+                    // we can ignore the "non exhaustive pattern" warning here, because, we're actually using TryParse - it will go to the else branch if not OK
+#pragma warning disable CS8524
                     (employee.IsManager, employee.IsCEO) = employeeType switch {
                         Models.EmployeeType.Employee => (false, false),
                         Models.EmployeeType.Manager => (true, false),
                         Models.EmployeeType.CEO => (true, true),
                     };
+#pragma warning restore CS8524
                 } else {
                     ModelState.AddModelError("EmployeeType", $"Employee type {EmployeeType} not recognized");
                     return View(employee);

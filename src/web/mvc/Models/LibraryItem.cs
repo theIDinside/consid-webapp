@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+#pragma warning disable
 namespace webapp.mvc.Models {
     [Table("LibraryItem")]
     public class LibraryItem {
@@ -73,3 +74,4 @@ namespace webapp.mvc.Models {
 
     }
 }
+#pragma warning restore

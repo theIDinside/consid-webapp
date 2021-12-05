@@ -116,7 +116,8 @@ public class LibraryItemController : Controller {
         // but, at some point, I have to hand in this assignment. With the understanding of asp core that I have now, after a week and a half, I would have
         // instead went with that designs. Instead, I handle a lot of this stuff with Javascript calling into controller actions from the client side
         var createLibItemViewModel = await db.GetCreateLibraryItemModel();
-        if (createLibItemViewModel.Categories.Count() == 0) {
+        var count = (createLibItemViewModel.Categories ?? new List<SelectListItem>()).Count();
+        if (count == 0) {
             ModelState.AddModelError("Category", "There exists no categories. You must first create a category where you can add this item to.");
         }
         return View(createLibItemViewModel);
@@ -133,7 +134,7 @@ public class LibraryItemController : Controller {
         }
 
         if (ModelState.IsValid && libItem != null) {
-            db.LibraryItems.AddAsync(libItem);
+            await db.LibraryItems.AddAsync(libItem);
             await db.CommitAsync();
             return RedirectToAction("Index");
         } else {

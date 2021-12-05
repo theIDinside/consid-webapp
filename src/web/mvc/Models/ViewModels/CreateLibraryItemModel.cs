@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace webapp.mvc.Models.ViewModels;
-
+#pragma warning disable
 public class CreateLibraryItemModel {
 
     [Required(ErrorMessage = "You must input a title")]
@@ -17,7 +17,7 @@ public class CreateLibraryItemModel {
     [Required]
     public int CategoryID { get; set; }
 
-    public List<SelectListItem> Categories { get; set; }
+    public List<SelectListItem>? Categories { get; set; }
 
     public LibraryItem? ToLibraryItem() {
         return Type switch {

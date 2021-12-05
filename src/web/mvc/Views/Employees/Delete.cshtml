@@ -1,6 +1,7 @@
 ﻿@model webapp.mvc.Models.Employee
 
 @{
+
     ViewBag.Title = "Delete";
 }
 
@@ -38,15 +39,24 @@
         <dt>
             Position
         </dt>
-            @{
-                if(Model.IsCEO) {
-                    <dd>CEO</dd>
-                } else if(Model.IsManager) {
-                    <dd>Manager</dd>
-                } else {
-                    <dd>Employee</dd>
-                }
+        @{
+
+            if (Model!.IsCEO)
+            {
+                <dd>CEO</dd>
+
             }
+            else if (Model.IsManager)
+            {
+                <dd>Manager</dd>
+
+            }
+            else
+            {
+                <dd>Employee</dd>
+
+            }
+        }
         <dt>
             Managed by
         </dt>
@@ -55,6 +65,7 @@
     </dl>
 
     @using (Html.BeginForm())
+
     {
         @Html.AntiForgeryToken()
 
@@ -62,6 +73,7 @@
             <input type="submit" value="Delete" class="btn btn-primary" /> |
             @Html.ActionLink("Back to List", "Index")
         </div>
+
     }
 </div>
 
@@ -70,11 +82,11 @@
         let managerId = @Json.Serialize(Model.ManagerID ?? -1 );
         console.log(`manager id: ${managerId}`);
         let managedByElement = document.getElementById("ManagedBy");
-        if(managerId == -1) {
+        if (managerId == -1) {
             managedByElement.innerText = "No one";
         } else {
             getEmployeeInfo(managerId).then(employee => {
-                if(employee.id != undefined) {
+                if (employee.id != undefined) {
                     let link = document.createElement("a");
                     link.href = `/Employees/Edit/${managerId}`;
                     let name = document.createTextNode(`${employee.firstname} ${employee.lastname}`);

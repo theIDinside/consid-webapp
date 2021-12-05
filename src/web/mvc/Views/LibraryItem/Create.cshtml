@@ -1,30 +1,32 @@
 ﻿@model webapp.mvc.Models.ViewModels.CreateLibraryItemModel
 @{
+
     ViewBag.Title = "Create Library item";
 }
 
 <script type="text/javascript">
-function doUpdate() {
-    let lengthLabel = document.getElementById("lengthLabel");
-    let typeSelect = document.getElementById("Type");
-    switch(typeSelect.value) {
-        case "book":
-        case "reference book":
-            lengthLabel.innerText = "Pages";
-        break;
-        case "audio book":
-        case "dvd":
-            lengthLabel.innerText = "Run time (minutes)";
-        break;
-        default:
-            lengthLabel.innerText = "Length";
+    function doUpdate() {
+        let lengthLabel = document.getElementById("lengthLabel");
+        let typeSelect = document.getElementById("Type");
+        switch (typeSelect.value) {
+            case "book":
+            case "reference book":
+                lengthLabel.innerText = "Pages";
+                break;
+            case "audio book":
+            case "dvd":
+                lengthLabel.innerText = "Run time (minutes)";
+                break;
+            default:
+                lengthLabel.innerText = "Length";
+        }
     }
-}
 
 </script>
 
 <h2>Create</h2>
 @using (Html.BeginForm("Create", "LibraryItem", FormMethod.Post, new { @id = "CreateLibraryItemForm" }))
+
 {
     @Html.AntiForgeryToken()
 
@@ -52,12 +54,12 @@ function doUpdate() {
         <div class="form-group">
             @Html.LabelFor(model => model.Type, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-            @Html.DropDownListFor(model => model.Type, new List<SelectListItem> {
-                            new SelectListItem { Value = "book", Text="Book" },
-                            new SelectListItem { Value = "reference book", Text = "Reference book" },
-                            new SelectListItem { Value = "dvd", Text = "DVD" },
-                            new SelectListItem { Value = "audio book", Text = "Audio Book" }
-                 }, new { @class = "form-select", @onchange = "doUpdate()" })
+                @Html.DropDownListFor(model => model.Type, new List<SelectListItem> {
+            new SelectListItem { Value = "book", Text="Book" },
+            new SelectListItem { Value = "reference book", Text = "Reference book" },
+            new SelectListItem { Value = "dvd", Text = "DVD" },
+            new SelectListItem { Value = "audio book", Text = "Audio Book" }
+            }, new { @class = "form-select", @onchange = "doUpdate()" })
                 @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
             </div>
         </div>
@@ -73,7 +75,7 @@ function doUpdate() {
         <div class="form-group">
             <label for="Category" class="control-label col-md-2">Select category</label>
             <div class="col-md-10">
-                @Html.DropDownListFor(m => m.CategoryID, @Model.Categories, new { @class = "form-select" })
+                @Html.DropDownListFor(m => m.CategoryID, @Model!.Categories, new { @class = "form-select" })
                 @Html.ValidationMessageFor(model => model.CategoryID, "", new { @class = "text-danger" })
             </div>
         </div>
@@ -87,6 +89,7 @@ function doUpdate() {
             @ViewBag.ErrorMessage
         </div>
     </div>
+
 }
 
 <div>
