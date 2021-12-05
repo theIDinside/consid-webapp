@@ -126,11 +126,14 @@ public class LibraryItemController : Controller {
     // POST METHOD
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> Create([Bind("Title, Author, Length, Type, CategoryID")] Models.ViewModels.CreateLibraryItemModel item) {
+    public async Task<ActionResult> Create([Bind("Title, Author, Length, Type, CategoryID")] CreateLibraryItemModel item) {
         ModelState.Remove("Categories");
         var libItem = item.ToLibraryItem();
         if (libItem == null) {
             ModelState.AddModelError("Type", "Unknown type was set");
+        }
+        if (await db.Categories.GetItemByIDAsync(item.CategoryID) == null) {
+            ModelState.AddModelError("CategoryID", $"No category with that ID exists [ID = {item.CategoryID}]");
         }
 
         if (ModelState.IsValid && libItem != null) {
