@@ -2,6 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace webapp.mvc.Models {
+    public enum EmployeePosition {
+        Employee = 1,
+        Manager = 2,
+        CEO = 3,
+    }
     public class Employee {
         [Key]
         public int ID { get; set; }

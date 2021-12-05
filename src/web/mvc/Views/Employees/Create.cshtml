@@ -93,6 +93,8 @@
     }
 
     onDocumentLoaded(() => {
+        console.log(`document loaded`);
+        formInputTrimmer();
         getManagers().then(result => {
             let managerSelect = document.getElementById("ManagerID");
             if (managerSelect) {

@@ -4,9 +4,9 @@ namespace webapp.mvc.Loggers {
 
     // RoundTheCodeFileLoggerOptions.cs
     public class FileLoggerOptions {
-        public virtual string filePath { get; set; }
+        public virtual string filePath { get; set; } = new("default.log");
 
-        public virtual string folderPath { get; set; }
+        public virtual string folderPath { get; set; } = new("./logs");
     }
 
     public class FileLogger : ILogger {

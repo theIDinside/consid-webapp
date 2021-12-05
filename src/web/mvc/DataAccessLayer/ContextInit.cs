@@ -9,7 +9,7 @@ namespace webapp.mvc.DataAccessLayer {
 
 
         public static void Initialize(IServiceProvider provider) {
-            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>())) {
+            using (var ctx = new ApplicationDbContext(provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>())) {
                 // Database should be seeded by the createtables.sql, but if not;
                 ctx.Database.EnsureCreated();
                 if (ctx.libraryItems.Any()) return;
@@ -43,8 +43,6 @@ namespace webapp.mvc.DataAccessLayer {
                     new LibraryItem { CategoryID = catProgrammingID, Title = "Modern X86 Assembly Language Programming 2nd Edition", Author = "Daniel Kusswurm", Pages = 604, IsBorrowable = false, Borrower = "", Type = "reference book" },
                     new LibraryItem { CategoryID = catProgrammingID, Title = "Foo bar", Author = "Baz", Pages = 1337, IsBorrowable = false, Borrower = "", Type = "reference book" }
                 );
-                ctx.SaveChanges();
-
                 ctx.SaveChanges();
             }
         }

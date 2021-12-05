@@ -4,12 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Services;
+using webapp.mvc.Repository;
+using webapp.mvc.Models.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using mvc.Repository.Interfaces;
+
 namespace webapp.mvc.Controllers {
     public class EmployeesController : Controller {
-
-        private readonly LibraryContext db;
+        // this interface, makes for instance, mocking and testing possible, since we would just inject a mock'ed implementation at test time
+        private readonly IWorkforce db;
         private readonly ILogger<EmployeesController> _logger;
-        public EmployeesController(ILogger<EmployeesController> logger, LibraryContext ctx) {
+        public EmployeesController(ILogger<EmployeesController> logger, Workforce ctx) {
             db = ctx;
             _logger = logger;
         }
@@ -26,7 +31,8 @@ namespace webapp.mvc.Controllers {
                         ModelState.AddModelError("ManagerID", "A CEO can not be managed by someone");
                         return;
                     }
-                    if (await db.employees.FirstOrDefaultAsync(e => e.ID == employee.ManagerID) is Employee man) {
+
+                    if (await db.Employees.GetItemByIDAsync(employee.ManagerID.Value) is Employee man) {
                         if (!employee.IsManager && man.IsCEO) {
                             ModelState.AddModelError("ManagerID", $"Employees can not be managed by a CEO");
                         }
@@ -42,16 +48,16 @@ namespace webapp.mvc.Controllers {
 
         // Makes sure that this employee is not a CEO while there already exists one.
         private void validateUniqueness(Employee employee) {
-            if (employee.IsCEO && db.employees.Any(e => e.IsCEO && e.ID != employee.ID)) {
+            if (employee.IsCEO && !db.CanPromoteToCEO(employee.ID)) {
                 ModelState.AddModelError("IsCEO", "There can only be one CEO of the library");
             }
 
         }
 
-        public const int EmployeeFilterNoManagers = 1;
-        public const int EmployeeFilterManagers = 2;
-        public const int EmployeeFilterCEO = 3;
-        public const int EmployeeFilterAll = 4;
+        private const int EmployeeFilterNoManagers = 1;
+        private const int EmployeeFilterManagers = 2;
+        private const int EmployeeFilterCEO = 3;
+        private const int EmployeeFilterAll = 4;
         // GET: Employees
         public async Task<ActionResult> Index(int? page, int? employeeFilter, [FromServices] PageSizeService pageSizeService) {
             // if no employee filter is passed; display all
@@ -59,12 +65,11 @@ namespace webapp.mvc.Controllers {
             type = type > EmployeeFilterAll ? EmployeeFilterAll : type;
             ViewBag.GroupBy = type;
 
-            // thank god for pattern matching. C# has finally "arrived."
             var viewModel = type switch {
-                EmployeeFilterNoManagers => await db.employees.Where(e => !e.IsManager).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                EmployeeFilterManagers => await db.employees.Where(e => e.IsManager && !e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                EmployeeFilterCEO => await db.employees.Where(e => e.IsCEO).GetPagedAsync(page ?? 1, pageSizeService.PageSize),
-                _ => await db.employees.GetPagedAsync(page ?? 1, pageSizeService.PageSize) // default case, or EmployeeFilterAll
+                EmployeeFilterNoManagers => await db.Employees.GetEmployees().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterManagers => await db.Employees.GetManagers().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                EmployeeFilterCEO => await db.Employees.GetCEO().GetPagedAsync(page ?? 1, pageSizeService.PageSize),
+                _ => await db.Employees.GetAllQueryable().GetPagedAsync(page ?? 1, pageSizeService.PageSize) // default case, or EmployeeFilterAll
             };
             ViewBag.CurrentPage = viewModel.PageIndex;
             return View(viewModel);
@@ -111,8 +116,8 @@ namespace webapp.mvc.Controllers {
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
-                db.employees.Add(employee);
-                await db.SaveChangesAsync();
+                db.Employees.AddAsync(employee);
+                await db.CommitAsync();
                 return RedirectToAction("Index");
             }
             return View(employee);
@@ -123,7 +128,7 @@ namespace webapp.mvc.Controllers {
             if (id == null) {
                 return new BadRequestResult();
             }
-            Employee? employee = await db.employees.FindAsync(id);
+            Employee? employee = await db.Employees.GetItemByIDAsync(id ?? 0);
             if (employee == null) {
                 return new NotFoundResult();
             }
@@ -132,36 +137,46 @@ namespace webapp.mvc.Controllers {
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(string EmployeeType, int ManagerID, [Bind("ID,FirstName,LastName,Salary, ManagerID")] Employee employee) {
+        public async Task<ActionResult> Edit(string EmployeeType, [Bind("ID,FirstName,LastName,ManagerID")] Employee employee) {
+            ModelState.Remove("ManagerList");
             EmployeeType employeeType;
             // the HTTP POST protocol can't post "null" values (it doesn't know what that is. It would post empty fields. We post -1 to represent "null")
-            employee.ManagerID = (ManagerID == -1) ? null : ManagerID;
-            if (Enum.TryParse(EmployeeType, out employeeType)) {
-                switch (employeeType) {
-                    case Models.EmployeeType.Employee:
-                        employee.IsManager = false;
-                        employee.IsCEO = false;
-                        break;
-                    case Models.EmployeeType.Manager:
-                        employee.IsManager = true;
-                        employee.IsCEO = false;
-                        break;
-                    case Models.EmployeeType.CEO:
-                        employee.IsManager = true;
-                        employee.IsCEO = true;
-                        break;
+            employee.ManagerID = (employee.ManagerID == -1) ? null : employee.ManagerID;
+            if (await db.Employees.GetItemByIDAsync(employee.ID) is Employee employeeRecord) {
+                if (Enum.TryParse(EmployeeType, out employeeType)) {
+                    // we can ignore the "non exhaustive pattern" warning here, because, we're actually using TryParse
+                    (employee.IsManager, employee.IsCEO) = employeeType switch {
+                        Models.EmployeeType.Employee => (false, false),
+                        Models.EmployeeType.Manager => (true, false),
+                        Models.EmployeeType.CEO => (true, true),
+                    };
+                } else {
+                    ModelState.AddModelError("EmployeeType", $"Employee type {EmployeeType} not recognized");
+                    return View(employee);
                 }
+                // update the entity tracked by the Entity Framework
+                employeeRecord.FirstName = employee.FirstName;
+                employeeRecord.LastName = employee.LastName;
+                employeeRecord.ManagerID = employee.ManagerID;
+                employeeRecord.IsManager = employee.IsManager;
+                employeeRecord.IsCEO = employee.IsCEO;
+
+                validateUniqueness(employeeRecord);
+                validateManagerIDAttribute(employeeRecord);
+                if (!employeeRecord.IsManager) {
+                    if (await db.Employees.AnyAsync(e => (e.ManagerID ?? 0) == employeeRecord.ID)) {
+                        ModelState.AddModelError("EmployeeType", "This employee manages other employees, it can not be demoted");
+                    }
+                }
+                if (ModelState.IsValid) {
+                    db.Employees.Update(employeeRecord);
+                    await db.CommitAsync();
+                    return RedirectToAction("Index");
+                }
+                return View(employee);
             } else {
-                ModelState.AddModelError("EmployeeType", $"Employee type {EmployeeType} not recognized");
+                return new NotFoundResult();
             }
-            validateUniqueness(employee);
-            validateManagerIDAttribute(employee);
-            if (ModelState.IsValid) {
-                db.Entry(employee).State = EntityState.Modified;
-                await db.SaveChangesAsync();
-                return RedirectToAction("Index");
-            }
-            return View(employee);
         }
 
         // GET: Employees/Delete/5
@@ -169,7 +184,7 @@ namespace webapp.mvc.Controllers {
             if (id == null) {
                 return new BadRequestResult();
             }
-            Employee? employee = await db.employees.FindAsync(id);
+            Employee? employee = await db.Employees.GetItemByIDAsync(id ?? 0);
             if (employee == null) {
                 return new NotFoundResult();
             }
@@ -180,15 +195,15 @@ namespace webapp.mvc.Controllers {
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id) {
-            if (await db.employees.FindAsync(id) is Employee employee) {
+            if (await db.Employees.GetItemByIDAsync(id) is Employee employee) {
                 if (employee.IsCEO || employee.IsManager) {
-                    if (await db.employees.AnyAsync(e => e.ManagerID == employee.ID)) {
+                    if (await db.Employees.AnyAsync(e => e.ManagerID == employee.ID)) {
                         ModelState.AddModelError("ManagerID", "This person manages other employees and therefore can't be deleted.");
                     }
                 }
                 if (ModelState.IsValid) {
-                    db.employees.Remove(employee);
-                    await db.SaveChangesAsync();
+                    db.Employees.Remove(employee);
+                    await db.CommitAsync();
                     return RedirectToAction("Index");
                 } else {
                     return View(employee);
@@ -204,8 +219,9 @@ namespace webapp.mvc.Controllers {
          */
         [HttpGet]
         public async Task<JsonResult> GetManagers() {
-            var managers = await db.employees.Where(emp => emp.IsManager).ToListAsync();
-            return Json(managers.Select(man => {
+            var managers = await db.Employees.GetManagers().ToListAsync();
+            var allmanagers = managers.Concat(await db.Employees.GetCEO().ToListAsync());
+            return Json(allmanagers.Select(man => {
                 return new { id = man.ID, name = $"{man.FirstName} {man.LastName}" };
             }));
         }
@@ -214,7 +230,7 @@ namespace webapp.mvc.Controllers {
         // This request must not fail, so when an invalid ID is sent (or any other error occurs) this returns an empty JSON object
         [HttpGet]
         public async Task<JsonResult> GetEmployeeInfo(int id) {
-            var e = await db.employees.FirstOrDefaultAsync(e => e.ID == id);
+            var e = await db.Employees.GetItemByIDAsync(id);
             if (e != null) {
                 var employeeType = (e.IsManager, e.IsCEO) switch {
                     (true, true) => "CEO",

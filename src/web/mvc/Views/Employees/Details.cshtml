@@ -71,7 +71,7 @@
     </dl>
 </div>
 <p>
-    @Html.ActionLink("Edit", "Edit", new { id = @Json.Serialize(Model.ID) }) |
+    @Html.ActionLink("Edit", "Edit", new { id = @Json.Serialize(Model!.ID) }) |
     @Html.ActionLink("Back to List", "Index")
 </p>
 

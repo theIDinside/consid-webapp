@@ -32,62 +32,44 @@ namespace webapp.mvc.Models {
         [Column("IsBorrowable")]
         public bool IsBorrowable { get; set; }
 
-
         [Column("Borrower")]
         [Required(AllowEmptyStrings = true)]
         [DisplayFormat(ConvertEmptyStringToNull = false)]
         [StringLength(100)]
         public string Borrower { get; set; }
 
-        [Column("BorrowDate")]
+        // we have to add the 'TypeName = "Date"', because otherwise, Entity Framework will create a DATETIME type, which is not what we want.
+
         [Display(Name = "Borrow date")]
         [DataType(DataType.Date)]
+        [Column("BorrowDate", TypeName = "Date")]
         public DateTime? BorrowDate { get; set; }
 
         [Required]
-        [StringLength(20)]
+        [StringLength(50)]
         public string Type { get; set; }
-
-        [NotMapped]
-        [Display(Name = "Library Item")]
-        public string Listing {
-            get {
-                // This method gets called when we want to display this library item's name, concatenated with the abbreviation
-                var abbreviation = string.Join("",
-                        this.Title.Split(' ')
-                        .Where(substr => substr.Length > 0 && char.IsLetterOrDigit(substr[0]))
-                        .Select(substr => char.ToUpper(substr[0]))
-                        .ToArray()
-                    );
-                return $"{Title} ({abbreviation})";
-            }
-        }
-        // What the "entity framework" calls a navigational property. It's essentially what CategoryID maps against, being a foreign key and all.
-        // We use this navigation property, to display the name of the category this Library item is assigned to.
-        // Caveat here; being this is day 2 of me using C# and ASP.NET, I'm not entirely sure this is idiomatic C#/EF, but it works.
-
+        // What E.F. calls a navigation property; essentially what the foreign key points to. We can say .Include(i => i.Category), and E.F. will hook it up for us, behind the scenes.
         public virtual Category Category { get; set; }
 
-        [NotMapped]
-        public bool IsBorrowed {
-            get {
-                return BorrowDate.HasValue;
-            }
-        }
         [NotMapped]
         public string displayDate {
             get {
                 return BorrowDate?.ToString("yyyy-MM-dd") ?? "";
             }
         }
+    }
 
-        [NotMapped]
-        public int LengthValue {
-            get {
-                if (Pages.HasValue) return Pages.Value;
-                else if (RunTimeMinutes.HasValue) return RunTimeMinutes.Value;
-                else return 0;
-            }
+    public static class DisplayListingExtension {
+        public static string ListDisplay(this string Title) {
+            // This method gets called when we want to display this library item's name, concatenated with the abbreviation
+            var abbreviation = string.Join("",
+                    Title.Split(' ')
+                    .Where(substr => substr.Length > 0 && char.IsLetterOrDigit(substr[0]))
+                    .Select(substr => char.ToUpper(substr[0]))
+                    .ToArray()
+                );
+            return $"{Title} ({abbreviation})";
         }
+
     }
 }

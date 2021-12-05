@@ -35,7 +35,9 @@ public class PagedViewModel<T> : BasePagedViewModel where T : class {
     }
 }
 
-// Extension function implementations. So that we can say db.libraryItems.GetPagedAsync(somePageNum, itemsPerPage)
+// Extension function implementations. So that we can say someIQueryableItems.GetPagedAsync(somePageNum, itemsPerPage) and turn it into the kind of data we want to display on the view
+// The reason we don't add an extesion method for List, but a Queryable, is because I've assumed, that the query and retrieval of data will be faster if we let SQL handle it for us.
+// If we did it for a List, we'd have to retrieve the entire table (based on possible filtering/sorting/ordering), realize that list in memory and then throw away all the content not needed.
 public static class PagedQueryExtension {
     public async static Task<PagedViewModel<T>> GetPagedAsync<T>(this IQueryable<T> query, int page, int pageSize) where T : class {
         var totalRowCount = 0;

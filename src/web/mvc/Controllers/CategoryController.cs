@@ -8,24 +8,32 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using webapp.mvc.Services;
+using webapp.mvc.Repository;
+using mvc.Repository.Interfaces;
 
 namespace webapp.mvc.Controllers;
 
 public class CategoryController : Controller {
     private readonly ILogger<CategoryController> _logger;
-    private LibraryContext db;
+    // this interface, makes for instance, mocking and testing possible, since we would just inject a mock'ed implementation at test time
+    private readonly ILibrary db;
 
-    public CategoryController(ILogger<CategoryController> logger, LibraryContext ctx) {
+    public CategoryController(ILogger<CategoryController> logger, Library ctx) {
         _logger = logger;
         db = ctx;
     }
 
     // GET: Li
-    public async Task<ActionResult> Index() {
-
-        return View(await db.categoryItems.ToListAsync());
+    public async Task<ActionResult> Index(string searchString, int? page, [FromServices] PageSizeService pageSizeService) {
+        ViewBag.CurrentPage = page ?? 1;
+        if (searchString != null) {
+            ViewBag.CurrentPage = 1;
+            ViewBag.Filter = searchString;
+        } else {
+            searchString = ViewBag.Filter;
+        }
+        return View(await db.Categories.GetAllFilterBy(searchString).GetPagedAsync(page ?? 1, pageSizeService.PageSize));
     }
 
     // GET: Returns the view containing the form for creating a Category
@@ -37,12 +45,12 @@ public class CategoryController : Controller {
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> Create([Bind("CategoryName")] Category category) {
-        if (await db.categoryItems.AnyAsync(cat => cat.CategoryName == category.CategoryName)) {
+        if (await db.Categories.AnyAsync(cat => cat.CategoryName == category.CategoryName)) {
             ModelState.AddModelError("CategoryName", $"A category with name {category.CategoryName} already exists, you must choose another one.");
         }
         if (ModelState.IsValid) {
-            db.categoryItems.Add(category);
-            await db.SaveChangesAsync();
+            await db.Categories.AddAsync(category);
+            await db.CommitAsync();
             return RedirectToAction("Index");
         }
 
@@ -54,7 +62,7 @@ public class CategoryController : Controller {
         if (id == null) {
             return new BadRequestResult();
         }
-        Category? category = await db.categoryItems.FindAsync(id);
+        Category? category = await db.Categories.GetItemByIDAsync(id ?? 0);
         if (category == null) {
             return new NotFoundResult();
         }
@@ -65,12 +73,12 @@ public class CategoryController : Controller {
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> Edit([Bind("ID,CategoryName")] Category category) {
-        if (await db.categoryItems.AnyAsync(c => c.CategoryName == category.CategoryName)) {
+        if (await db.Categories.AnyAsync(c => c.CategoryName == category.CategoryName)) {
             ModelState.AddModelError("CategoryName", "A category with that name already exists");
         }
         if (ModelState.IsValid) {
-            db.Entry(category).State = EntityState.Modified;
-            await db.SaveChangesAsync();
+            db.Categories.Update(category);
+            await db.CommitAsync();
             return RedirectToAction("Index");
         }
         return View(category);
@@ -81,7 +89,7 @@ public class CategoryController : Controller {
         if (id == null) {
             return new BadRequestResult();
         }
-        Category? category = await db.categoryItems.FindAsync(id);
+        Category? category = await db.Categories.GetItemByIDAsync(id ?? 0);
         if (category == null) {
             return new NotFoundResult();
         }
@@ -93,14 +101,17 @@ public class CategoryController : Controller {
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteConfirmed(int id) {
-        var category = await db.categoryItems.FindAsync(id);
-        var hasEntitiesWithFKCategoryId = await db.libraryItems.AnyAsync(libitem => libitem.CategoryID == id);
+        var category = await db.Categories.GetItemByIDAsync(id);
+        var hasEntitiesWithFKCategoryId = await db.LibraryItems.AnyAsync(libitem => libitem.CategoryID == id);
         if (hasEntitiesWithFKCategoryId) {
-            ModelState.AddModelError("CategoryName", "This category has items in it. You need to either delete those library items or move them to another category.");
+            ModelState.AddModelError("ID", "This category has items in it. You need to either delete those library items or move them to another category.");
+        }
+        if (category == null) {
+            ModelState.AddModelError("ID", "This category doesn't exist anymore");
         }
         if (ModelState.IsValid) {
-            db.categoryItems.Remove(category);
-            await db.SaveChangesAsync();
+            db.Categories.Remove(category!);
+            await db.CommitAsync();
             return RedirectToAction("Index");
         }
         return View(category);
@@ -109,7 +120,7 @@ public class CategoryController : Controller {
     // HTTP GET method for finding out how many items a specific category has
     [HttpGet]
     public async Task<JsonResult> GetCategoryItemCount(int id) {
-        var itemCount = await db.libraryItems.Where(item => item.CategoryID == id).CountAsync();
+        var itemCount = await db.LibraryItems.Find(item => item.CategoryID == id).CountAsync();
         return Json(new { count = itemCount });
     }
 
@@ -118,7 +129,7 @@ public class CategoryController : Controller {
      */
     [HttpGet]
     public async Task<JsonResult> GetCategories() {
-        var categories = await db.categoryItems.ToListAsync();
+        var categories = await db.Categories.GetAllAsync();
         return Json(categories.Select(a => new { categoryId = a.ID, categoryName = a.CategoryName }));
     }
 
