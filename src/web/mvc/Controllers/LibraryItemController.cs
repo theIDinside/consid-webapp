@@ -11,21 +11,6 @@ using webapp.mvc.Services;
 using webapp.mvc.Repository;
 
 namespace webapp.mvc.Controllers;
-/*
-    Internal research notes
-    HTTP Request comes in and goes to
-                |-> Middleware
-                |-> Routing
-                |-> Controller initialization (this is where the factory comes to play)
-                |-> Action Method Execution
-                |                     -----------> Data result sent out
-                |                   /
-                |-> Result Execution
-                                    \
-                                     \-> View result
-                                     |-> View Rendering -> Response sent out
-
-*/
 public class LibraryItemController : Controller {
     private readonly ILogger<LibraryItemController> _logger;
 
