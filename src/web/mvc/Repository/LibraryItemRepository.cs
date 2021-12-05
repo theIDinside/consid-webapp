@@ -12,6 +12,8 @@ public class LibraryItemRepository : ConsidRepository<LibraryItem> {
 
     }
 
+    // Returns an IQueryable, since it's a non-realized fetch from the backend, and we realize it, on the callee side when we need it.
+    // that way, we can utilize our extension method for IQueryable<T>; items.GetPaged(page, pageSize) to provide a "paged" user interface
     public IQueryable<LibraryItem> QueryOrderBy(string? filter, string? orderBy) {
         var items = from i in ctx.libraryItems select i;
         items = String.IsNullOrEmpty(filter) ? items.Include(e => e.Category) : items.Where(item => item.Title.Contains(filter)).Include(e => e.Category);

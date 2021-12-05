@@ -36,12 +36,14 @@ public class Library : IDisposable {
         ctx.Dispose();
     }
 
+    // helper method, that creats a view model, sort of like a " Edit-view-model" of the Library Item model
     public async Task<EditLibraryItemModel?> GetEditLibraryItemModel(int id) {
         var categories = await ctx.categoryItems.Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
         var it = await ctx.libraryItems.FirstAsync(i => i.ID == id);
         return new EditLibraryItemModel { ID = it.ID, Title = it.Title, Author = it.Author, CategoryID = it.CategoryID, Categories = categories, Length = (it.RunTimeMinutes ?? it.Pages) ?? 0, Type = it.Type, IsBorrowable = it.IsBorrowable, Borrower = it.Borrower, BorrowDate = it.BorrowDate };
     }
 
+    // helper method, that creats a view model, sort of like a "create view model" of the Library Item model
     public async Task<CreateLibraryItemModel> GetCreateLibraryItemModel() {
         var createLibItemViewModel = new CreateLibraryItemModel();
         createLibItemViewModel.Categories = await Categories.GetAllQueryable().Select(c => new SelectListItem { Value = c.ID.ToString(), Text = c.CategoryName }).ToListAsync();
