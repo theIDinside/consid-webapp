@@ -1,14 +1,15 @@
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using mvc.Repository.Interfaces;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
-public class LibraryItemRepository : ConsidRepository<LibraryItem> {
-    public LibraryItemRepository(LibraryContext contextReference) : base(contextReference) {
+public class LibraryItemRepository : ConsidRepository<LibraryItem>, ILibraryItemRepository {
+    public LibraryItemRepository(ApplicationDbContext contextReference) : base(contextReference) {
 
     }
 

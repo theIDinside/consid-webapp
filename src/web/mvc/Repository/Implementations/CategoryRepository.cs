@@ -1,14 +1,15 @@
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using mvc.Repository.Interfaces;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
-public class CategoryRepository : ConsidRepository<Category> {
-    public CategoryRepository(LibraryContext contextReference) : base(contextReference) {
+public class CategoryRepository : ConsidRepository<Category>, ICategoryRepository {
+    public CategoryRepository(ApplicationDbContext contextReference) : base(contextReference) {
 
     }
 

@@ -1,18 +1,15 @@
-using System.Linq.Expressions;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using mvc.Repository.Interfaces;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
-using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
 // Basically the "Unit of work" pattern, but not exactly (but almost)
-public class Workforce : IDisposable {
-    private readonly LibraryContext ctx;
-    public EmployeeRepository Employees { get; private set; }
+public class Workforce : IDisposable, IWorkforce {
+    private readonly ApplicationDbContext ctx;
+    public IEmployeeRepository Employees { get; set; }
 
-    public Workforce(LibraryContext contextReference) {
+    public Workforce(ApplicationDbContext contextReference) {
         ctx = contextReference;
         Employees = new EmployeeRepository(ctx);
     }

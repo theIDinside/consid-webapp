@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore.SqlServer;
 using webapp.mvc.Loggers;
 using webapp.mvc.Services;
 using webapp.mvc.Repository;
+using mvc.Repository.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 // Add services to the container.
-builder.Services.AddDbContext<webapp.mvc.DataAccessLayer.LibraryContext>(options => {
+builder.Services.AddDbContext<webapp.mvc.DataAccessLayer.ApplicationDbContext>(options => {
     // NB(for consid): we've set up this database connection in appsettings.Development.json.
     // If you need to test against your own database, change the values there (port, hostname etc).
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -67,8 +68,8 @@ var pageSizeService = new PageSizeService(pageSize);
 // register page size serivce; so that we can set the amount of items per page, in the appsettings.json
 builder.Services.AddSingleton<PageSizeService>(pageSizeService);
 // Register our "unit of work"-like services that talks to the backend. It's not fully a unit of work pattern, but sorta
-builder.Services.AddTransient<Library>();
-builder.Services.AddTransient<Workforce>();
+builder.Services.AddScoped<Library>();
+builder.Services.AddScoped<Workforce>();
 
 // build the app, with the configurations and settings we've provided, the services etc
 var app = builder.Build();

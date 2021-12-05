@@ -1,14 +1,17 @@
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using mvc.Repository.Interfaces;
 using webapp.mvc.DataAccessLayer;
 using webapp.mvc.Models;
 using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
-public class EmployeeRepository : ConsidRepository<Employee> {
-    public EmployeeRepository(LibraryContext contextReference) : base(contextReference) {
+
+
+public class EmployeeRepository : ConsidRepository<Employee>, IEmployeeRepository {
+    public EmployeeRepository(ApplicationDbContext contextReference) : base(contextReference) {
 
     }
 

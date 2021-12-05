@@ -8,16 +8,16 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using webapp.mvc.Services;
 using webapp.mvc.Repository;
+using mvc.Repository.Interfaces;
 
 namespace webapp.mvc.Controllers;
 
 public class CategoryController : Controller {
     private readonly ILogger<CategoryController> _logger;
-    private Library db;
+    // this interface, makes for instance, mocking and testing possible, since we would just inject a mock'ed implementation at test time
+    private readonly ILibrary db;
 
     public CategoryController(ILogger<CategoryController> logger, Library ctx) {
         _logger = logger;
@@ -49,7 +49,7 @@ public class CategoryController : Controller {
             ModelState.AddModelError("CategoryName", $"A category with name {category.CategoryName} already exists, you must choose another one.");
         }
         if (ModelState.IsValid) {
-            db.Categories.Add(category);
+            await db.Categories.AddAsync(category);
             await db.CommitAsync();
             return RedirectToAction("Index");
         }

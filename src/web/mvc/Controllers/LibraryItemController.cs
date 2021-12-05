@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using webapp.mvc.Services;
 using webapp.mvc.Repository;
+using mvc.Repository.Interfaces;
 
 namespace webapp.mvc.Controllers;
 public class LibraryItemController : Controller {
     private readonly ILogger<LibraryItemController> _logger;
 
-    private readonly Library db;
+    // this interface, makes for instance, mocking and testing possible, since we would just inject a mock'ed implementation at test time
+    private readonly ILibrary db;
 
     // The ordering of library items. Stays alive for the session or until a user idles out (after 1 hr)
     private String SessionOrdering {
@@ -131,7 +133,7 @@ public class LibraryItemController : Controller {
         }
 
         if (ModelState.IsValid && libItem != null) {
-            db.LibraryItems.Add(libItem);
+            db.LibraryItems.AddAsync(libItem);
             await db.CommitAsync();
             return RedirectToAction("Index");
         } else {

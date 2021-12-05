@@ -9,7 +9,7 @@ namespace webapp.mvc.DataAccessLayer {
 
 
         public static void Initialize(IServiceProvider provider) {
-            using (var ctx = new LibraryContext(provider.GetRequiredService<DbContextOptions<LibraryContext>>())) {
+            using (var ctx = new ApplicationDbContext(provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>())) {
                 // Database should be seeded by the createtables.sql, but if not;
                 ctx.Database.EnsureCreated();
                 if (ctx.libraryItems.Any()) return;

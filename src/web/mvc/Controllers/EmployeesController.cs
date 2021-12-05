@@ -7,11 +7,12 @@ using webapp.mvc.Services;
 using webapp.mvc.Repository;
 using webapp.mvc.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using mvc.Repository.Interfaces;
 
 namespace webapp.mvc.Controllers {
     public class EmployeesController : Controller {
-
-        private readonly Workforce db;
+        // this interface, makes for instance, mocking and testing possible, since we would just inject a mock'ed implementation at test time
+        private readonly IWorkforce db;
         private readonly ILogger<EmployeesController> _logger;
         public EmployeesController(ILogger<EmployeesController> logger, Workforce ctx) {
             db = ctx;
@@ -115,7 +116,7 @@ namespace webapp.mvc.Controllers {
             validateUniqueness(employee);
             validateManagerIDAttribute(employee);
             if (ModelState.IsValid) {
-                db.Employees.Add(employee);
+                db.Employees.AddAsync(employee);
                 await db.CommitAsync();
                 return RedirectToAction("Index");
             }
@@ -163,7 +164,7 @@ namespace webapp.mvc.Controllers {
                 validateUniqueness(employeeRecord);
                 validateManagerIDAttribute(employeeRecord);
                 if (!employeeRecord.IsManager) {
-                    if (db.Employees.Any(e => (e.ManagerID ?? 0) == employeeRecord.ID)) {
+                    if (await db.Employees.AnyAsync(e => (e.ManagerID ?? 0) == employeeRecord.ID)) {
                         ModelState.AddModelError("EmployeeType", "This employee manages other employees, it can not be demoted");
                     }
                 }

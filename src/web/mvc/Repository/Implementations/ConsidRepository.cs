@@ -7,13 +7,17 @@ using webapp.mvc.Models;
 namespace webapp.mvc.Repository;
 
 public abstract class ConsidRepository<T> : IAsyncRepository<T> where T : class {
-    protected readonly LibraryContext ctx;
-    public ConsidRepository(LibraryContext context) {
+    protected readonly ApplicationDbContext ctx;
+    public ConsidRepository(ApplicationDbContext context) {
         ctx = context;
     }
 
     public void Add(T item) {
         ctx.Set<T>().Add(item);
+    }
+
+    public async Task AddAsync(T item) {
+        await ctx.Set<T>().AddAsync(item);
     }
 
     public void AddRange(IEnumerable<T> list) {
@@ -54,18 +58,6 @@ public abstract class ConsidRepository<T> : IAsyncRepository<T> where T : class 
 
     public void Remove(T entity) {
         ctx.Set<T>().Remove(entity);
-    }
-
-    public void RemoveRange(IEnumerable<T> list) {
-        ctx.Set<T>().RemoveRange(list);
-    }
-
-    public void SaveChanges() {
-        ctx.SaveChanges();
-    }
-
-    public async Task SaveChangesAsync() {
-        await ctx.SaveChangesAsync();
     }
 
     public void Update(T entity) {

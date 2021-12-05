@@ -1,20 +1,20 @@
-using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+
+using mvc.Repository.Interfaces;
 using webapp.mvc.DataAccessLayer;
-using webapp.mvc.Models;
 using webapp.mvc.Models.ViewModels;
 
 namespace webapp.mvc.Repository;
 
 // Basically the "Unit of work" pattern, but not exactly (but almost)
-public class Library : IDisposable {
-    private readonly LibraryContext ctx;
+public class Library : IDisposable, ILibrary {
+    private readonly ApplicationDbContext ctx;
 
-    public LibraryItemRepository LibraryItems { get; private set; }
-    public CategoryRepository Categories { get; private set; }
+    public ILibraryItemRepository LibraryItems { get; set; }
+    public ICategoryRepository Categories { get; set; }
 
-    public Library(LibraryContext contextReference) {
+    public Library(ApplicationDbContext contextReference) {
         ctx = contextReference;
         LibraryItems = new LibraryItemRepository(ctx);
         Categories = new CategoryRepository(ctx);
